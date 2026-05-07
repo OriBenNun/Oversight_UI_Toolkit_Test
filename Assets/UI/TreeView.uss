@@ -6,7 +6,8 @@
 
 .tree-search {
     margin: 4px;
-    height: 24px;
+    height: 64px;
+    font-size: 36px;
 }
 
 .tree-list-view {

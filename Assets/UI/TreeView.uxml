@@ -1,6 +1,7 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="false">
+    <Style src="project://database/Assets/UI/TreeView.uss?fileID=7433441132597879392&amp;guid=500e075eccd5102439a2ee0d7b18301b&amp;type=3#TreeView"/>
     <ui:VisualElement name="tree-root" class="tree-root">
-        <ui:TextField name="search-field" placeholder-text="Search..." class="tree-search" />
-        <ui:ListView name="tree-list-view" class="tree-list-view" />
+        <ui:TextField name="search-field" placeholder-text="Search..." class="tree-search"/>
+        <ui:ListView name="tree-list-view" class="tree-list-view"/>
     </ui:VisualElement>
 </ui:UXML>
