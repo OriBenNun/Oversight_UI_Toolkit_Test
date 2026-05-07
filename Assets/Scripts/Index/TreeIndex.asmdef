@@ -1,0 +1,14 @@
+{
+    "name": "OversightTreeIndex",
+    "rootNamespace": "Oversight.Index",
+    "references": ["OversightTreeModel"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

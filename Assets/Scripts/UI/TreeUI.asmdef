@@ -1,0 +1,14 @@
+{
+    "name": "OversightTreeUI",
+    "rootNamespace": "Oversight.UI",
+    "references": ["OversightTree", "OversightTreeModel", "OversightTreeIndex", "OversightTreeLogic"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

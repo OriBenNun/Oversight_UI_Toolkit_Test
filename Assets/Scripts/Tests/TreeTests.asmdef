@@ -1,0 +1,15 @@
+{
+    "name": "OversightTreeTests",
+    "rootNamespace": "Oversight.Tests",
+    "references": ["OversightTree", "OversightTreeModel", "OversightTreeIndex", "OversightTreeLogic"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": ["nunit.framework"],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true,
+    "optionalUnityReferences": ["TestAssemblies"]
+}
