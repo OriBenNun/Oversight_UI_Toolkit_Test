@@ -184,7 +184,7 @@ namespace Oversight.UI
         private void RebuildFlatList()
         {
             _flatList = _index.BuildFlatList();
-            _listView.itemsSource = (System.Collections.IList)_flatList;
+            _listView.itemsSource = _flatList;
             _listView.RefreshItems();
             ResolveSelectionIndex();
         }
@@ -195,7 +195,7 @@ namespace Oversight.UI
                 ? _index.BuildFlatList()
                 : _index.FilterNodes(query);
 
-            _listView.itemsSource = (System.Collections.IList)_flatList;
+            _listView.itemsSource = _flatList;
             _listView.RefreshItems();
             ResolveSelectionIndex();
         }

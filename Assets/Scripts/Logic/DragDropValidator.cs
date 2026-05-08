@@ -75,7 +75,7 @@ namespace Oversight.Logic
         {
             if (parentId == null) return _roots;
             var parent = _index.GetNodeById(parentId);
-            return parent?.Children ?? (IReadOnlyList<TreeNode>)_roots;
+            return parent?.Children ?? _roots;
         }
 
         private static int IndexIn(IReadOnlyList<TreeNode> list, TreeNode node)
