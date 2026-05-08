@@ -32,10 +32,10 @@ namespace Oversight.Model
         public bool IsGroup => NodeType == NodeType.Group;
         public bool IsLeaf  => NodeType == NodeType.Item;
 
-        internal void SetExpanded(bool value) => _isExpanded = value;
-        internal void SetVisible(bool value)  => _isVisible = value;
-        internal void SetParent(string parentId) => _parentId = parentId;
-        internal void AddChild(TreeNode child, int index) => _children.Insert(index, child);
-        internal void RemoveChild(TreeNode child) => _children.Remove(child);
+        public void SetExpanded(bool value) => _isExpanded = value;
+        public void SetVisible(bool value)  => _isVisible = value;
+        public void SetParent(string parentId) => _parentId = parentId;
+        public void AddChild(TreeNode child, int index) => _children.Insert(index, child);
+        public void RemoveChild(TreeNode child) => _children.Remove(child);
     }
 }
