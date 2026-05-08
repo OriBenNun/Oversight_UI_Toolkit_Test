@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Oversight.Model
 {
-    [Serializable]
     public class TreeNode
     {
         public string NodeId;

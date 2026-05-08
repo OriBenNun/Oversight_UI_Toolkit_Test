@@ -62,11 +62,11 @@ namespace Oversight.Logic
             var current = _index.GetNodeById(candidateId);
             if (current == null) return false;
 
-            current = _index.GetNodeById(current.ParentId);
-            while (current != null)
+            while (current.ParentId != null)
             {
-                if (current.NodeId == ancestorId) return true;
                 current = _index.GetNodeById(current.ParentId);
+                if (current == null) break;
+                if (current.NodeId == ancestorId) return true;
             }
             return false;
         }
