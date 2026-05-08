@@ -25,13 +25,13 @@ namespace Oversight.Logic
             var target  = _index.GetNodeById(targetId);
             if (dragged == null || target == null) return false;
 
-            // Reject same parent + same position (no-op reorder)
+            // Reject same parent + adjacent position (no-op reorder)
             if (dragged.ParentId == target.ParentId)
             {
                 var siblings = GetSiblingList(dragged.ParentId);
-                int di = siblings.IndexOf(dragged);
-                int ti = siblings.IndexOf(target);
-                if (Math.Abs(di - ti) == 1) return false; // adjacent → no effective move
+                int di = IndexIn(siblings, dragged);
+                int ti = IndexIn(siblings, target);
+                if (Math.Abs(di - ti) == 1) return false;
             }
 
             return true;
@@ -44,19 +44,19 @@ namespace Oversight.Logic
             if (dragged == null || target == null) return;
 
             // Detach from current parent
-            var oldSiblings = GetSiblingList(dragged.ParentId);
-            oldSiblings.Remove(dragged);
+            if (dragged.ParentId == null)
+                _roots.Remove(dragged);
+            else
+                _index.GetNodeById(dragged.ParentId)?.RemoveChild(dragged);
 
             // Reparent
-            dragged.ParentId = targetId;
+            dragged.SetParent(targetId);
             int clampedIndex = Math.Clamp(insertIndex, 0, target.Children.Count);
-            target.Children.Insert(clampedIndex, dragged);
+            target.AddChild(dragged, clampedIndex);
 
-            // Rebuild index
             _index.Build(_roots);
         }
 
-        // Returns true if candidateId is a descendant of ancestorId
         public bool IsDescendant(string ancestorId, string candidateId)
         {
             var current = _index.GetNodeById(candidateId);
@@ -71,11 +71,18 @@ namespace Oversight.Logic
             return false;
         }
 
-        private List<TreeNode> GetSiblingList(string parentId)
+        private IReadOnlyList<TreeNode> GetSiblingList(string parentId)
         {
             if (parentId == null) return _roots;
             var parent = _index.GetNodeById(parentId);
-            return parent?.Children ?? _roots;
+            return parent?.Children ?? (IReadOnlyList<TreeNode>)_roots;
+        }
+
+        private static int IndexIn(IReadOnlyList<TreeNode> list, TreeNode node)
+        {
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] == node) return i;
+            return -1;
         }
     }
 }

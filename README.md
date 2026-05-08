@@ -35,7 +35,7 @@ Here's the planned architecture for the program:
 3. Interaction logic (Expand/collapse, selection, visibility toggles)
 4. Drag/drop + validation (Validation check. if invalid, don't allow the operation. if valid, update the model, which
    will be followed by tree re-indexing and UI rebuild)
-5. UI Toolkit view (using ListView for flattened virtualized list of items, rebuilds on every change)
+5. UI Toolkit view (The only MonoBehaviour in the architecture.using ListView for flattened virtualized list of items, rebuilds on every change)
 
 Here what you should keep in mind:
 From my understanding, the main trade-off with this approach is the re-indexing of the tree upon every re-order
@@ -67,4 +67,9 @@ But if we had 250k nodes, this wouldn't cut it, and we'd better use multiple arr
 
 1800:
 Made a few minor manual changes as I went through the code.
-Seems like seperation of data mutation isn't perfect (currently the drag drop validator mutates the tree structure directly). Fixing it with Claude.
+Seems like seperation of data mutation isn't perfect (currently the drag drop validator mutates the tree structure directly). Fixing it with Claude. Here's the prompt:
+"
+Seems like seperation of data mutation isn't perfect (currently the drag drop validator mutates the tree structure
+directly). I want the TreeNode fields to be protected and can be mutated safely only from within by the interaction
+logic manager.
+"

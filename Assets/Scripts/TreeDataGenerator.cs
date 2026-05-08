@@ -34,14 +34,14 @@ namespace Oversight
                 if (!atLeafDepth && i < 2)
                 {
                     var group = new TreeNode($"Group_{depth}_{i}", NodeType.Group, parent.NodeId);
-                    parent.Children.Add(group);
+                    parent.AddChild(group, parent.Children.Count);
                     created++;
                     FillGroup(group, depth + 1, maxDepth, targetCount, ref created);
                 }
                 else
                 {
                     var item = new TreeNode($"Item_{depth}_{i}", NodeType.Item, parent.NodeId);
-                    parent.Children.Add(item);
+                    parent.AddChild(item, parent.Children.Count);
                     created++;
                 }
             }

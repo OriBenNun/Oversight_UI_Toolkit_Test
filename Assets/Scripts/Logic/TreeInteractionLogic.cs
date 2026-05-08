@@ -20,7 +20,7 @@ namespace Oversight.Logic
         {
             var node = _index.GetNodeById(nodeId);
             if (node == null) return;
-            node.IsExpanded = !node.IsExpanded;
+            node.SetExpanded(!node.IsExpanded);
             OnFlatListInvalidated?.Invoke();
         }
 
@@ -32,7 +32,7 @@ namespace Oversight.Logic
             if (node.IsGroup)
                 SetVisibilityRecursive(node, !node.IsVisible);
             else
-                node.IsVisible = !node.IsVisible;
+                node.SetVisible(!node.IsVisible);
 
             OnFlatListInvalidated?.Invoke();
         }
@@ -46,7 +46,7 @@ namespace Oversight.Logic
 
         private void SetVisibilityRecursive(TreeNode node, bool visible)
         {
-            node.IsVisible = visible;
+            node.SetVisible(visible);
             foreach (var child in node.Children)
                 SetVisibilityRecursive(child, visible);
         }

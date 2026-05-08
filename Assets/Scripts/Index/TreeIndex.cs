@@ -31,7 +31,7 @@ namespace Oversight.Index
             var current = GetNodeById(node.ParentId);
             while (current != null)
             {
-                current.IsExpanded = true;
+                current.SetExpanded(true);
                 current = GetNodeById(current.ParentId);
             }
         }

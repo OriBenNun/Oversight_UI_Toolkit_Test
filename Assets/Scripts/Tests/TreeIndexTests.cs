@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using Oversight.Model;
 using Oversight.Index;
 using Oversight.Logic;
@@ -22,13 +23,13 @@ namespace Oversight.Tests
             _root = new TreeNode("Root", NodeType.Group);
 
             _childA = new TreeNode("ChildA", NodeType.Group, _root.NodeId);
-            _root.Children.Add(_childA);
+            _root.AddChild(_childA, _root.Children.Count);
 
             _grandchildA1 = new TreeNode("GrandchildA1", NodeType.Item, _childA.NodeId);
-            _childA.Children.Add(_grandchildA1);
+            _childA.AddChild(_grandchildA1, _childA.Children.Count);
 
             _childB = new TreeNode("ChildB", NodeType.Item, _root.NodeId);
-            _root.Children.Add(_childB);
+            _root.AddChild(_childB, _root.Children.Count);
 
             _roots = new List<TreeNode> { _root };
             _index = new TreeIndex();
@@ -64,7 +65,7 @@ namespace Oversight.Tests
         [Test]
         public void BuildFlatList_ExpandRoot_ReturnsRootAndDirectChildren()
         {
-            _root.IsExpanded = true;
+            _root.SetExpanded(true);
             var flat = _index.BuildFlatList();
             Assert.AreEqual(3, flat.Count); // root, childA, childB
             Assert.AreEqual(_root,   flat[0].node);
@@ -75,8 +76,8 @@ namespace Oversight.Tests
         [Test]
         public void BuildFlatList_ExpandAll_ReturnsDFSOrder()
         {
-            _root.IsExpanded   = true;
-            _childA.IsExpanded = true;
+            _root.SetExpanded(true);
+            _childA.SetExpanded(true);
             var flat = _index.BuildFlatList();
             Assert.AreEqual(4, flat.Count);
             Assert.AreEqual(_root,          flat[0].node);
@@ -88,8 +89,8 @@ namespace Oversight.Tests
         [Test]
         public void BuildFlatList_DepthIsCorrect()
         {
-            _root.IsExpanded   = true;
-            _childA.IsExpanded = true;
+            _root.SetExpanded(true);
+            _childA.SetExpanded(true);
             var flat = _index.BuildFlatList();
             Assert.AreEqual(0, flat[0].depth); // root
             Assert.AreEqual(1, flat[1].depth); // childA
@@ -100,8 +101,8 @@ namespace Oversight.Tests
         [Test]
         public void BuildFlatList_InvisibleNode_Excluded()
         {
-            _root.IsExpanded = true;
-            _childA.IsVisible = false;
+            _root.SetExpanded(true);
+            _childA.SetVisible(false);
             var flat = _index.BuildFlatList();
             Assert.AreEqual(2, flat.Count); // root + childB only
             Assert.IsFalse(flat.Exists(t => t.node == _childA));
@@ -124,8 +125,8 @@ namespace Oversight.Tests
         [Test]
         public void RevealNode_DoesNotCollapseAlreadyExpanded()
         {
-            _root.IsExpanded   = true;
-            _childA.IsExpanded = true;
+            _root.SetExpanded(true);
+            _childA.SetExpanded(true);
             _index.RevealNode(_grandchildA1.NodeId);
             Assert.IsTrue(_root.IsExpanded);
             Assert.IsTrue(_childA.IsExpanded);
@@ -136,8 +137,8 @@ namespace Oversight.Tests
         [Test]
         public void FilterNodes_EmptyQuery_ReturnsFullFlatList()
         {
-            _root.IsExpanded   = true;
-            _childA.IsExpanded = true;
+            _root.SetExpanded(true);
+            _childA.SetExpanded(true);
             var full   = _index.BuildFlatList();
             var filter = _index.FilterNodes("");
             Assert.AreEqual(full.Count, filter.Count);
@@ -187,13 +188,13 @@ namespace Oversight.Tests
             _root = new TreeNode("Root", NodeType.Group);
 
             _childA = new TreeNode("ChildA", NodeType.Group, _root.NodeId);
-            _root.Children.Add(_childA);
+            _root.AddChild(_childA, _root.Children.Count);
 
             _grandchildA1 = new TreeNode("GrandchildA1", NodeType.Item, _childA.NodeId);
-            _childA.Children.Add(_grandchildA1);
+            _childA.AddChild(_grandchildA1, _childA.Children.Count);
 
             _childB = new TreeNode("ChildB", NodeType.Item, _root.NodeId);
-            _root.Children.Add(_childB);
+            _root.AddChild(_childB, _root.Children.Count);
 
             _roots = new List<TreeNode> { _root };
             _index = new TreeIndex();
