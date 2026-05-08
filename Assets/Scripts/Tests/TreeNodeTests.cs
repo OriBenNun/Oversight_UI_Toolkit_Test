@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using System.Collections.Generic;
 using Oversight.Model;
 
 namespace Oversight.Tests

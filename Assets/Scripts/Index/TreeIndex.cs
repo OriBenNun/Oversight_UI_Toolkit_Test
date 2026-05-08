@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Oversight.Model;
 
@@ -6,8 +5,8 @@ namespace Oversight.Index
 {
     public class TreeIndex
     {
-        private Dictionary<string, TreeNode> _idMap = new Dictionary<string, TreeNode>();
-        private List<TreeNode> _roots = new List<TreeNode>();
+        private Dictionary<string, TreeNode> _idMap = new();
+        private List<TreeNode> _roots = new();
 
         public void Build(List<TreeNode> roots)
         {
