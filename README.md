@@ -58,7 +58,7 @@ Tomorrow I will start reading the generated code and see that everything is acco
 ### 8/5/2026:
 
 1700:
-Resumed working on the project. Started reading the generated code.
+Resumed working on the project. Started reading the generated code from top to bottom (model to UI).
 So far it seems good: we have a single MonoBehaviour (TreeViewController) to control the UI during runtime and coordinate user input events, while the rest of the code is plain C# and UXML/USS.
 
 Another tradeoff I just realized (and confirmed with Claude) is that we are basically guaranteed to have cache misses every time we traverse the tree, since each TreeNode is a seperate heap allocation.
@@ -70,6 +70,9 @@ Made a few minor manual changes as I went through the code.
 Seems like seperation of data mutation isn't perfect (currently the drag drop validator mutates the tree structure directly). Fixing it with Claude. Here's the prompt:
 "
 Seems like seperation of data mutation isn't perfect (currently the drag drop validator mutates the tree structure
-directly). I want the TreeNode fields to be protected and can be mutated safely only from within by the interaction
-logic manager.
+directly). I want the TreeNode fields to be protected and can be mutated safely only from within.
 "
+
+Moving on to the indexing layer.
+
+---- Had to leave for a while ----
