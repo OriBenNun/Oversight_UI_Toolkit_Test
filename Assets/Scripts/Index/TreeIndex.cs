@@ -18,6 +18,7 @@ namespace Oversight.Index
 
         public TreeNode GetNodeById(string id)
         {
+            if (string.IsNullOrEmpty(id)) return null;
             _idMap.TryGetValue(id, out var node);
             return node;
         }
