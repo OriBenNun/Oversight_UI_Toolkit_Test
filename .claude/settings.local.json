@@ -8,7 +8,9 @@
       "PowerShell(Get-ChildItem -Path \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\" -Depth 2 -File | Where-Object { $_.Extension -in @\\('.md', '.txt'\\) } | Select-Object FullName)",
       "Bash(Select-Object FullName)",
       "Bash(Sort-Object FullName)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\\\\Scripts\" -Directory | Where-Object {$_.Name -eq \"Editor\"})",
+      "PowerShell(Get-ChildItem \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\" -Directory | Where-Object {$_.Name -eq \"Editor\"})"
     ]
   }
 }

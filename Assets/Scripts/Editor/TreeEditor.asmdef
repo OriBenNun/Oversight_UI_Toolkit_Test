@@ -1,0 +1,14 @@
+{
+    "name": "OversightTreeEditor",
+    "rootNamespace": "Oversight.Editor",
+    "references": ["OversightTree", "OversightTreeModel", "OversightTreeData"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

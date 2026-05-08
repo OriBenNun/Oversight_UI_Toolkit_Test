@@ -4,6 +4,7 @@ using UnityEngine.UIElements;
 using Oversight.Model;
 using Oversight.Index;
 using Oversight.Logic;
+using Oversight.Data;
 
 namespace Oversight.UI
 {
@@ -34,7 +35,7 @@ namespace Oversight.UI
         private void Awake()
         {
             _doc = GetComponent<UIDocument>();
-            _roots = TreeDataGenerator.Generate(2500, 6);
+            _roots = LoadOrGenerateTree();
 
             _index = new TreeIndex();
             _index.Build(_roots);
@@ -43,6 +44,37 @@ namespace Oversight.UI
             _validator = new DragDropValidator(_index, _roots);
 
             _logic.OnFlatListInvalidated += RebuildFlatList;
+        }
+
+        private List<TreeNode> LoadOrGenerateTree()
+        {
+            var asset = Resources.Load<TreeDataAsset>("TreeData");
+            if (asset?.Nodes?.Length > 0)
+                return ReconstructTree(asset.Nodes);
+
+            Debug.LogError("[Oversight] TreeData.asset not found in Resources. Run Oversight/Generate Tree Data from the editor menu.");
+            return new List<TreeNode>();
+        }
+
+        private static List<TreeNode> ReconstructTree(NodeData[] nodes)
+        {
+            var map = new Dictionary<string, TreeNode>(nodes.Length);
+            foreach (var d in nodes)
+            {
+                string pid = string.IsNullOrEmpty(d.ParentId) ? null : d.ParentId;
+                map[d.Id] = TreeNode.PopulateNewNode(d.Id, d.DisplayName, d.NodeType, pid, d.LayerType);
+            }
+
+            var roots = new List<TreeNode>();
+            foreach (var d in nodes)
+            {
+                var node = map[d.Id];
+                if (string.IsNullOrEmpty(d.ParentId))
+                    roots.Add(node);
+                else if (map.TryGetValue(d.ParentId, out var parent))
+                    parent.AddChild(node, parent.Children.Count);
+            }
+            return roots;
         }
 
         private void OnEnable()

@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using Oversight.Model;
 
@@ -6,82 +7,86 @@ namespace Oversight.Tests
     [TestFixture]
     public class TreeNodeTests
     {
+        private static TreeNode Make(string name, NodeType type, string parentId = null,
+                                     LayerType layerType = LayerType.None)
+            => TreeNode.PopulateNewNode(Guid.NewGuid().ToString(), name, type, parentId, layerType);
+
         [Test]
-        public void Constructor_AssignsUniqueIds()
+        public void Restore_AssignsUniqueIds()
         {
-            var a = new TreeNode("A", NodeType.Item);
-            var b = new TreeNode("B", NodeType.Item);
+            var a = Make("A", NodeType.Item);
+            var b = Make("B", NodeType.Item);
             Assert.AreNotEqual(a.NodeId, b.NodeId);
         }
 
         [Test]
-        public void Constructor_NodeIdIsNotNullOrEmpty()
+        public void Restore_NodeIdIsNotNullOrEmpty()
         {
-            var node = new TreeNode("X", NodeType.Item);
+            var node = Make("X", NodeType.Item);
             Assert.IsFalse(string.IsNullOrEmpty(node.NodeId));
         }
 
         [Test]
-        public void Constructor_DefaultsIsVisibleTrue()
+        public void Restore_DefaultsIsVisibleTrue()
         {
-            var node = new TreeNode("X", NodeType.Item);
+            var node = Make("X", NodeType.Item);
             Assert.IsTrue(node.IsVisible);
         }
 
         [Test]
-        public void Constructor_DefaultsIsExpandedFalse()
+        public void Restore_DefaultsIsExpandedFalse()
         {
-            var node = new TreeNode("X", NodeType.Item);
+            var node = Make("X", NodeType.Item);
             Assert.IsFalse(node.IsExpanded);
         }
 
         [Test]
-        public void Constructor_SetsParentId()
+        public void Restore_SetsParentId()
         {
-            var node = new TreeNode("X", NodeType.Item, "parent-123");
+            var node = Make("X", NodeType.Item, "parent-123");
             Assert.AreEqual("parent-123", node.ParentId);
         }
 
         [Test]
-        public void Constructor_NullParentIdByDefault()
+        public void Restore_NullParentIdByDefault()
         {
-            var node = new TreeNode("X", NodeType.Item);
+            var node = Make("X", NodeType.Item);
             Assert.IsNull(node.ParentId);
         }
 
         [Test]
         public void IsGroup_ReturnsTrueForGroupType()
         {
-            var node = new TreeNode("G", NodeType.Group);
+            var node = Make("G", NodeType.Group);
             Assert.IsTrue(node.IsGroup);
         }
 
         [Test]
         public void IsLeaf_ReturnsTrueForItemType()
         {
-            var node = new TreeNode("I", NodeType.Item);
+            var node = Make("I", NodeType.Item);
             Assert.IsTrue(node.IsLeaf);
         }
 
         [Test]
         public void IsGroup_ReturnsFalseForItemType()
         {
-            var node = new TreeNode("I", NodeType.Item);
+            var node = Make("I", NodeType.Item);
             Assert.IsFalse(node.IsGroup);
         }
 
         [Test]
         public void Children_InitializedEmpty()
         {
-            var node = new TreeNode("X", NodeType.Group);
+            var node = Make("X", NodeType.Group);
             Assert.IsNotNull(node.Children);
             Assert.AreEqual(0, node.Children.Count);
         }
 
         [Test]
-        public void Constructor_SetsDisplayName()
+        public void Restore_SetsDisplayName()
         {
-            var node = new TreeNode("MyNode", NodeType.Item);
+            var node = Make("MyNode", NodeType.Item);
             Assert.AreEqual("MyNode", node.DisplayName);
         }
     }

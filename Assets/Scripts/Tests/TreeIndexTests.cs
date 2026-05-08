@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,13 @@ using Oversight.Logic;
 
 namespace Oversight.Tests
 {
+    internal static class NodeFactory
+    {
+        internal static TreeNode Make(string name, NodeType type, string parentId = null,
+                                      LayerType layerType = LayerType.None)
+            => TreeNode.PopulateNewNode(Guid.NewGuid().ToString(), name, type, parentId, layerType);
+    }
+
     [TestFixture]
     public class TreeIndexTests
     {
@@ -20,15 +28,15 @@ namespace Oversight.Tests
         [SetUp]
         public void Setup()
         {
-            _root = new TreeNode("Root", NodeType.Group);
+            _root = NodeFactory.Make("Root", NodeType.Group);
 
-            _childA = new TreeNode("ChildA", NodeType.Group, _root.NodeId);
+            _childA = NodeFactory.Make("ChildA", NodeType.Group, _root.NodeId);
             _root.AddChild(_childA, _root.Children.Count);
 
-            _grandchildA1 = new TreeNode("GrandchildA1", NodeType.Item, _childA.NodeId);
+            _grandchildA1 = NodeFactory.Make("GrandchildA1", NodeType.Item, _childA.NodeId);
             _childA.AddChild(_grandchildA1, _childA.Children.Count);
 
-            _childB = new TreeNode("ChildB", NodeType.Item, _root.NodeId);
+            _childB = NodeFactory.Make("ChildB", NodeType.Item, _root.NodeId);
             _root.AddChild(_childB, _root.Children.Count);
 
             _roots = new List<TreeNode> { _root };
@@ -80,10 +88,10 @@ namespace Oversight.Tests
             _childA.SetExpanded(true);
             var flat = _index.BuildFlatList();
             Assert.AreEqual(4, flat.Count);
-            Assert.AreEqual(_root,          flat[0].node);
-            Assert.AreEqual(_childA,        flat[1].node);
-            Assert.AreEqual(_grandchildA1,  flat[2].node);
-            Assert.AreEqual(_childB,        flat[3].node);
+            Assert.AreEqual(_root,         flat[0].node);
+            Assert.AreEqual(_childA,       flat[1].node);
+            Assert.AreEqual(_grandchildA1, flat[2].node);
+            Assert.AreEqual(_childB,       flat[3].node);
         }
 
         [Test]
@@ -185,15 +193,15 @@ namespace Oversight.Tests
         [SetUp]
         public void Setup()
         {
-            _root = new TreeNode("Root", NodeType.Group);
+            _root = NodeFactory.Make("Root", NodeType.Group);
 
-            _childA = new TreeNode("ChildA", NodeType.Group, _root.NodeId);
+            _childA = NodeFactory.Make("ChildA", NodeType.Group, _root.NodeId);
             _root.AddChild(_childA, _root.Children.Count);
 
-            _grandchildA1 = new TreeNode("GrandchildA1", NodeType.Item, _childA.NodeId);
+            _grandchildA1 = NodeFactory.Make("GrandchildA1", NodeType.Item, _childA.NodeId);
             _childA.AddChild(_grandchildA1, _childA.Children.Count);
 
-            _childB = new TreeNode("ChildB", NodeType.Item, _root.NodeId);
+            _childB = NodeFactory.Make("ChildB", NodeType.Item, _root.NodeId);
             _root.AddChild(_childB, _root.Children.Count);
 
             _roots = new List<TreeNode> { _root };
@@ -211,14 +219,12 @@ namespace Oversight.Tests
         [Test]
         public void IsValidDrop_RejectsDescendantTarget()
         {
-            // Dragging root into its own grandchild → invalid
             Assert.IsFalse(_validator.IsValidDrop(_root.NodeId, _grandchildA1.NodeId));
         }
 
         [Test]
         public void IsValidDrop_AcceptsReparentToUncle()
         {
-            // Dragging grandchildA1 into childB's parent space → valid
             Assert.IsTrue(_validator.IsValidDrop(_grandchildA1.NodeId, _childB.NodeId));
         }
 
@@ -259,7 +265,6 @@ namespace Oversight.Tests
         public void ExecuteDrop_RebuildsIndex()
         {
             _validator.ExecuteDrop(_grandchildA1.NodeId, _childB.NodeId, 0);
-            // Index should still find grandchild
             var found = _index.GetNodeById(_grandchildA1.NodeId);
             Assert.IsNotNull(found);
         }

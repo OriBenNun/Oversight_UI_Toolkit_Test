@@ -1,7 +1,7 @@
 {
-    "name": "OversightTreeUI",
-    "rootNamespace": "Oversight.UI",
-    "references": ["OversightTree", "OversightTreeModel", "OversightTreeIndex", "OversightTreeLogic", "OversightTreeData"],
+    "name": "OversightTreeData",
+    "rootNamespace": "Oversight.Data",
+    "references": ["OversightTreeModel"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

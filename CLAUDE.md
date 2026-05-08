@@ -25,26 +25,27 @@ Assets/Scripts/
 ├── Index/          TreeIndex.cs                       (namespace Oversight.Index)
 ├── Logic/          TreeInteractionLogic.cs, DragDropValidator.cs  (namespace Oversight.Logic)
 ├── UI/             TreeViewController.cs              (namespace Oversight.UI)
+├── Data/           NodeData.cs, TreeDataAsset.cs      (namespace Oversight.Data)
 ├── Tests/          TreeNodeTests.cs, TreeIndexTests.cs
-└── TreeDataGenerator.cs                               (namespace Oversight)
+└── Editor/         TreeDataGenerator.cs, TreeDataGeneratorEditor.cs  (namespace Oversight.Editor)
 
 Assets/UI/
 ├── TreeView.uxml
 └── TreeView.uss
 ```
 
-Each layer has its own `.asmdef` for compile isolation.
+Each layer has its own `.asmdef` for compile isolation. Editor assembly (`OversightTreeEditor`) is excluded from runtime builds.
 
 ## Architecture
 
 | Layer | File | Key API |
 |---|---|---|
-| **Data Model** | `Model/TreeNode.cs` | `NodeId`, `ParentId`, `Children` (IReadOnlyList), `IsExpanded`, `IsVisible`, `SetExpanded/SetVisible/SetParent/AddChild/RemoveChild` |
+| **Data Model** | `Model/TreeNode.cs` | `NodeId`, `ParentId`, `Children` (IReadOnlyList), `IsExpanded`, `IsVisible`, `SetExpanded/SetVisible/SetParent/AddChild/RemoveChild`, `Restore(id,name,type,parentId,layerType)` |
 | **Tree Index** | `Index/TreeIndex.cs` | `Build(roots)`, `GetNodeById(id)`, `RevealNode(id)`, `BuildFlatList()`, `FilterNodes(query)` |
 | **Interaction Logic** | `Logic/TreeInteractionLogic.cs` | `ToggleExpand`, `ToggleVisibility`, `SetSelection/GetSelection`, `OnFlatListInvalidated` event |
 | **Drag/Drop Validator** | `Logic/DragDropValidator.cs` | `IsValidDrop`, `ExecuteDrop`, `IsDescendant` |
 | **UI Toolkit View** | `UI/TreeViewController.cs` | MonoBehaviour on UIDocument; owns ListView + search TextField |
-| **Data Generator** | `TreeDataGenerator.cs` | `Generate(2500, 6)` — static, produces List\<TreeNode\> |
+| **Data Generator** | `Editor/TreeDataGenerator.cs` | `Generate(2500, 6)` — editor-only, produces `List<TreeNode>` via `Restore` with pre-generated Guids |
 
 ## Key Technical Decisions
 
@@ -63,6 +64,8 @@ Each layer has its own `.asmdef` for compile isolation.
 **Keyboard navigation**: Up/Down arrows move selection, Enter/Space toggle expand on selected node.
 
 **TreeNode encapsulation**: Children exposed as `IReadOnlyList<TreeNode>` — mutations go through `AddChild(node, index)` / `RemoveChild(node)` only.
+
+**TreeNode construction**: No public constructor. Only `TreeNode.Restore(id, name, type, parentId, layerType)` creates instances. Guids are generated once at editor time by `TreeDataGenerator`, baked into `TreeData.asset`, and loaded at runtime via `Restore`. Runtime never calls `Guid.NewGuid()`. Tests use a `NodeFactory.Make` helper that calls `Restore` with a fresh Guid.
 
 ## Packages
 

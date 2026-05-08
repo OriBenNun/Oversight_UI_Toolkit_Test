@@ -73,6 +73,44 @@ Seems like seperation of data mutation isn't perfect (currently the drag drop va
 directly). I want the TreeNode fields to be protected and can be mutated safely only from within.
 "
 
-Moving on to the indexing layer.
+1830:
+Ran the project for the first time (Play Mode) and saw it's working (about 80% of the way there).
+Pushed minor changes and bugfix due to runtime errors.
 
 ---- Had to leave for a while ----
+
+0100:
+Updated Claude.md with the current state of the project.
+
+Before moving on to reading the indexing layer, I want to create the data sample during editor-time instead of runtime (to improve startup loading times and have a stable dataset for testing).
+Also, adding missing layer types according to the assignment.
+Here's the plan prompt for Claude:
+"
+I want to create the data sample during editor-time instead of runtime.
+Also, adding missing layer types according to the assignment, here's the quote from the instructions:
+The UI represents a mission planning layer panel. A user can manage:
+• Map layers
+• 3D model layers
+• Camera layers
+• Sensor layers
+• Groups and sub-groups
+so we need to add the layerType as new enum and pick random layer while generating the data items (add a new property
+to the TreeNode for this new layerType and use it when naming the node).
+
+Generate the sample data (~2500 nodes, 6 hierarchy levels, mixed nodeTypes) in a smart way that looks similar to a
+real case scenario for "mission-critical systems used by real customers in the field"
+"
+
+After reading the plan, I added this clarification:
+"
+Just to make clear - the data is static and never mutates (runtime loads the
+data sample and mutates the live runtime data model). the generated data can be
+in any convenient and readable format which is still runtime-load performence
+awered
+"
+
+Added another clarification after the 2nd iteration:
+"
+The GUIDs should never change, not for the static nor the live data model, so
+we can safely generate it during editor time.
+"

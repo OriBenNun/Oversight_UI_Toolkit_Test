@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Oversight.Model
@@ -13,21 +12,28 @@ namespace Oversight.Model
         public string NodeId { get; }
         public string DisplayName { get; }
         public NodeType NodeType { get; }
+        public LayerType LayerType { get; }
         public string ParentId => _parentId;
         public bool IsExpanded => _isExpanded;
         public bool IsVisible => _isVisible;
         public IReadOnlyList<TreeNode> Children => _children;
 
-        public TreeNode(string displayName, NodeType type, string parentId = null)
+        private TreeNode(string nodeId, string displayName, NodeType type,
+                         string parentId, LayerType layerType)
         {
-            NodeId = Guid.NewGuid().ToString();
+            NodeId = nodeId;
             DisplayName = displayName;
             NodeType = type;
+            LayerType = layerType;
             _parentId = parentId;
             _isExpanded = false;
             _isVisible = true;
             _children = new List<TreeNode>();
         }
+
+        public static TreeNode PopulateNewNode(string nodeId, string displayName, NodeType type, string parentId,
+            LayerType layerType) =>
+            new(nodeId, displayName, type, parentId, layerType);
 
         public bool IsGroup => NodeType == NodeType.Group;
         public bool IsLeaf  => NodeType == NodeType.Item;
