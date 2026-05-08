@@ -59,3 +59,8 @@ Tomorrow I will start reading the generated code and see that everything is acco
 
 1700:
 Resumed working on the project. Started reading the generated code.
+So far it seems good: we have a single MonoBehaviour (TreeViewController) to control the UI during runtime and coordinate user input events, while the rest of the code is plain C# and UXML/USS.
+
+Another tradeoff I just realized is that we are basically guaranteed to have cache misses every time we traverse the tree, since each TreeNode is a seperate heap allocation.
+In this case, the assignment mandates that we use a tree structure, and also 2500 nodes is not a big deal.
+But if we had 250k nodes, this wouldn't cut it, and we'd better use multiple arrays of nodes to represent the tree structure while benefiting from cache locality.
