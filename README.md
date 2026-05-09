@@ -124,10 +124,10 @@ Ran the tests (written by Claude upon NUnit) using the Test Runner, and they all
 did some manual + Claude assisted changes in the USS for better UI appearance (bigger rows, spacing, bigger fonts, bg color, etc.)
 
 0300:
-Fixing an unintended behavior (Claude misunderstood) by explaining what the "visibility state" actually should mean (I think lol):
+Fixing an unintended behavior (Claude misunderstood the instructions) by explaining what the "visibility state" actually should mean (I think lol):
 "
 the visibility button shouldn't affect the actual item hidden/shown rendering state, it's just to simulate if the
 "layer" (or group/subgroup of layers) are currently "visible on the surface", which is just a flag state in our
 case. so change the visibility button to a tri-state checkbox
 "
-Moving on to the indexing layer.
+

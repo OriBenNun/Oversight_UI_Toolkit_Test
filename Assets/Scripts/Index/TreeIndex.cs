@@ -94,7 +94,6 @@ namespace Oversight.Index
 
         private void AppendVisible(TreeNode node, int depth, List<(TreeNode, int)> result)
         {
-            if (!node.IsVisible) return;
             result.Add((node, depth));
             if (node.IsExpanded)
             {

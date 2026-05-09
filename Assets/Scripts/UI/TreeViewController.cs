@@ -194,7 +194,11 @@ namespace Oversight.UI
             if (node.IsGroup) label.AddToClassList("tree-label--group");
             else              label.RemoveFromClassList("tree-label--group");
 
-            visBtn.text = node.IsVisible ? "●" : "○";
+            var visState = _logic.ComputeVisibilityState(node);
+            visBtn.text = visState == VisibilityState.Visible ? "●" : visState == VisibilityState.Mixed ? "◑" : "○";
+            visBtn.EnableInClassList("tree-visibility-btn--visible", visState == VisibilityState.Visible);
+            visBtn.EnableInClassList("tree-visibility-btn--mixed",   visState == VisibilityState.Mixed);
+            visBtn.EnableInClassList("tree-visibility-btn--hidden",  visState == VisibilityState.Hidden);
             if (visBtn.userData is System.Action oldVisCb) visBtn.clicked -= oldVisCb;
             System.Action newVisCb = () => _logic.ToggleVisibility(node.NodeId);
             visBtn.userData = newVisCb;
@@ -204,9 +208,6 @@ namespace Oversight.UI
                 element.AddToClassList("tree-row--selected");
             else
                 element.RemoveFromClassList("tree-row--selected");
-
-            if (!node.IsVisible) element.AddToClassList("tree-row--hidden");
-            else                 element.RemoveFromClassList("tree-row--hidden");
 
             if (index == _dragTargetIndex) element.AddToClassList("tree-row--drag-target");
             else                           element.RemoveFromClassList("tree-row--drag-target");

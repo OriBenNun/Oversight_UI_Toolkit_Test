@@ -37,7 +37,7 @@
     width: 16px;
     height: 16px;
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 16px;
     -unity-text-align: middle-center;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
@@ -67,18 +67,23 @@
 }
 
 .tree-visibility-btn {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
-    font-size: 14px;
+    font-size: 18px;
     -unity-text-align: middle-center;
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
     margin: 0;
     padding: 0;
+    right: 24px;
     color: rgb(150, 150, 150);
     /*cursor: link;*/
 }
+
+.tree-visibility-btn--visible { color: rgb(180, 220, 180); }
+.tree-visibility-btn--mixed   { color: rgb(220, 200, 120); }
+.tree-visibility-btn--hidden  { color: rgb(150, 150, 150); }
 
 .tree-row--selected {
     background-color: rgba(44, 93, 135, 0.9);
@@ -88,9 +93,6 @@
     color: rgb(255, 255, 255);
 }
 
-.tree-row--hidden .tree-label {
-    opacity: 0.4;
-}
 
 .tree-row--drag-target {
     border-color: rgb(80, 160, 255);
