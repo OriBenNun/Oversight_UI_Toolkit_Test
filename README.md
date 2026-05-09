@@ -149,6 +149,11 @@ So here's the IDEA of the MonoBehaviour managers we need for now:
 3. InteractionsHandler: all user interactions. fetches data and asks to mutate data from the handler
 4. RenderingHandler: handles the UI rebuilding"
 
+0600:
+Pushed the managers refactor.
+
+---- Going to bed ----
+
 Moving on to the indexing layer.
 
 
