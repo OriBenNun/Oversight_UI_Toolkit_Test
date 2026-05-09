@@ -54,7 +54,6 @@ namespace Oversight.Logic
             int clampedIndex = Math.Clamp(insertIndex, 0, target.Children.Count);
             target.AddChild(dragged, clampedIndex);
 
-            _index.Build(_roots);
         }
 
         public bool IsDescendant(string ancestorId, string candidateId)

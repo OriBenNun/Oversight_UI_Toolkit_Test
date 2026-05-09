@@ -40,7 +40,7 @@ namespace Oversight.Index
         {
             var result = new List<(TreeNode, int)>();
             foreach (var root in _roots)
-                AppendVisible(root, 0, result);
+                AppendShown(root, 0, result);
             return result;
         }
 
@@ -72,11 +72,6 @@ namespace Oversight.Index
                 }
             }
 
-            // Build depth map for included nodes
-            var depthMap = new Dictionary<string, int>();
-            foreach (var id in included)
-                depthMap[id] = ComputeDepth(id);
-
             // DFS to produce ordered result (only included, skip non-included subtrees)
             var result = new List<(TreeNode, int)>();
             foreach (var root in _roots)
@@ -92,13 +87,13 @@ namespace Oversight.Index
                 RegisterNode(child);
         }
 
-        private void AppendVisible(TreeNode node, int depth, List<(TreeNode, int)> result)
+        private void AppendShown(TreeNode node, int depth, List<(TreeNode, int)> result)
         {
             result.Add((node, depth));
             if (node.IsExpanded)
             {
                 foreach (var child in node.Children)
-                    AppendVisible(child, depth + 1, result);
+                    AppendShown(child, depth + 1, result);
             }
         }
 
@@ -110,17 +105,5 @@ namespace Oversight.Index
                 AppendFiltered(child, depth + 1, included, result);
         }
 
-        private int ComputeDepth(string id)
-        {
-            int depth = 0;
-            var node = GetNodeById(id);
-            var ancestor = GetNodeById(node?.ParentId);
-            while (ancestor != null)
-            {
-                depth++;
-                ancestor = GetNodeById(ancestor.ParentId);
-            }
-            return depth;
-        }
     }
 }

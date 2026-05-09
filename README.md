@@ -131,3 +131,29 @@ the visibility button shouldn't affect the actual item hidden/shown rendering st
 case. so change the visibility button to a tri-state checkbox
 "
 
+---- Went on a break ----
+
+0440:
+While writing about the single MonoBehaviour in the tradeoffs part, and I went back to the instructions and re-read them, I realized it was written there to avoid using a single MonoBehaviour for "everything". So here's my prompt for Claude to fix it:
+"
+the instructions clearly state: "Avoid putting everything in one MonoBehaviour."
+To make sure we follow this guideline, I want you to seperate the TreeViewController into multiple MonoBehaviours,
+each (ideally) communicating with a single layer - keeping the SOC between the 5 layers (and improving it, as
+currently TreeViewController touches all 5 layers). Make a plan to improve SOC, use multiple MB managers to handle
+runtime with single responsabilities, and follow the assignment instructions as they are.
+So here's the IDEA of the MonoBehaviour managers we need for now:
+1. DataHandler: loads, keeps and mutate the data by request by other managers. single source of truth. no one else
+   keeps a reference to it, always asks.
+2. IndexHandler: handles indexing and visible rows. keep the lookup dict which populates once from the DataHandler
+   data.
+3. InteractionsHandler: all user interactions. fetches data and asks to mutate data from the handler
+4. RenderingHandler: handles the UI rebuilding"
+
+Moving on to the indexing layer.
+
+
+
+Most Important Tradeoffs:
+1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.
+2. Using List<TreeNode> for _children, which is not ideal for cache locality (although uses array under the hood, but we don't ensure locality during allocation), but is fine for 2500 nodes.
+3. 

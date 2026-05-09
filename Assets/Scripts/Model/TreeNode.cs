@@ -2,6 +2,8 @@ using System.Collections.Generic;
 
 namespace Oversight.Model
 {
+    public enum VisibilityState { Visible, Hidden, Mixed }
+
     public class TreeNode
     {
         private string _parentId;
@@ -43,5 +45,32 @@ namespace Oversight.Model
         public void SetParent(string parentId) => _parentId = parentId;
         public void AddChild(TreeNode child, int index) => _children.Insert(index, child);
         public void RemoveChild(TreeNode child) => _children.Remove(child);
+
+        public VisibilityState ComputeVisibilityState()
+        {
+            if (!IsGroup)
+                return IsVisible ? VisibilityState.Visible : VisibilityState.Hidden;
+
+            bool anyVisible = false, anyHidden = false;
+            CollectLeafStates(this, ref anyVisible, ref anyHidden);
+
+            if (anyVisible && anyHidden) return VisibilityState.Mixed;
+            if (anyHidden) return VisibilityState.Hidden;
+            return VisibilityState.Visible;
+        }
+
+        private static void CollectLeafStates(TreeNode node, ref bool anyVisible, ref bool anyHidden)
+        {
+            if (anyVisible && anyHidden) return;
+            foreach (var child in node.Children)
+            {
+                if (child.IsGroup)
+                    CollectLeafStates(child, ref anyVisible, ref anyHidden);
+                else if (child.IsVisible)
+                    anyVisible = true;
+                else
+                    anyHidden = true;
+            }
+        }
     }
 }
