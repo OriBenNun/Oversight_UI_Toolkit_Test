@@ -500,6 +500,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cd0ac61efa20144690fb7542292ce08, type: 3}
   m_Name: 
   m_EditorClassIdentifier: OversightTreeUI::Oversight.UI.TreeViewController
+  _treeDataAsset: {fileID: 11400000, guid: 6da9e4ef055545b4a9c76083dbc43622, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

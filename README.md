@@ -114,3 +114,20 @@ Added another clarification after the 2nd iteration:
 The GUIDs should never change, not for the static nor the live data model, so
 we can safely generate it during editor time.
 "
+
+pushed the editor time generation refactor.
+pushed small dict null check bugfix in GetNodeById, detected during runtime test.
+changed Resource folder fetch to [SerializedField] on TreeViewController for better runtime performance and static access.
+
+0215:
+Ran the tests (written by Claude upon NUnit) using the Test Runner, and they all passed :)
+did some manual + Claude assisted changes in the USS for better UI appearance (bigger rows, spacing, bigger fonts, bg color, etc.)
+
+0300:
+Fixing an unintended behavior (Claude misunderstood) by explaining what the "visibility state" actually should mean (I think lol):
+"
+the visibility button shouldn't affect the actual item hidden/shown rendering state, it's just to simulate if the
+"layer" (or group/subgroup of layers) are currently "visible on the surface", which is just a flag state in our
+case. so change the visibility button to a tri-state checkbox
+"
+Moving on to the indexing layer.

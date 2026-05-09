@@ -11,6 +11,8 @@ namespace Oversight.UI
     [RequireComponent(typeof(UIDocument))]
     public class TreeViewController : MonoBehaviour
     {
+        [SerializeField] private TreeDataAsset _treeDataAsset;
+
         private UIDocument _doc;
         private ListView _listView;
         private TextField _searchField;
@@ -48,11 +50,10 @@ namespace Oversight.UI
 
         private List<TreeNode> LoadOrGenerateTree()
         {
-            var asset = Resources.Load<TreeDataAsset>("TreeData");
-            if (asset?.Nodes?.Length > 0)
-                return ReconstructTree(asset.Nodes);
+            if (_treeDataAsset?.Nodes?.Length > 0)
+                return ReconstructTree(_treeDataAsset.Nodes);
 
-            Debug.LogError("[Oversight] TreeData.asset not found in Resources. Run Oversight/Generate Tree Data from the editor menu.");
+            Debug.LogError("[Oversight] TreeDataAsset not assigned. Drag TreeData.asset onto the TreeViewController component.");
             return new List<TreeNode>();
         }
 
@@ -109,7 +110,7 @@ namespace Oversight.UI
 
         private void SetupListView()
         {
-            _listView.fixedItemHeight = 22;
+            _listView.fixedItemHeight = 48;
             _listView.virtualizationMethod = CollectionVirtualizationMethod.FixedHeight;
             _listView.makeItem = MakeRow;
             _listView.bindItem = BindRow;
