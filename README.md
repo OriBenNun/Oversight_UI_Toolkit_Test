@@ -6,6 +6,18 @@
 2. open the project through the Unity Hub with the correct Unity Editor version (6000.4.5f1)
 3. run the project
 
+To control the UI, you can:
+
+1. Use the mouse to select, and drag/drop nodes (while dragging a node, hovering between nodes will show a thin blue
+   line
+   between them, indicating where the node will land, and a blue border + background will appear around a group node if
+   you are about to move it into it)
+2. Use the keyboard to navigate and expand/collapse nodes (arrow keys and space/enter)
+3. Use the search bar to filter nodes by name (case-insensitive, partial match, finds both groups and layers)
+4. Use the expand/collapse arrow on the left of the group's name to expand/collapse the group
+5. Use the visibility toggle on the rightside of the node's layer to "hide"/"show" the layer (mutates the underlying
+   data, but the toggle is the only visual indicator of the visibility state)
+
 ##### Unity version used: 6000.4.5f1
 
 ##### Architecture Overview:
@@ -26,7 +38,7 @@ Layers (top → bottom)
 4. IndexHandler ← Derived state. Flat list, id map, filter, reveal
 5. DataHandler ← Source of truth. Tree structure, mutation, persistence
 
-Each handler knows only the layers below it. No upward references.
+Each handler knows only the layers **below** it. No upward references.
 
 ##### Most Important Tradeoffs:
 
@@ -425,8 +437,11 @@ Also was easily fixed by Claude. We just added a new enum to keep track of the d
 after), and added a corresponding USS class and Rendering simple logic
 
 #### 2220:
-Finished with the bugfixes, now re-reading the instructions to make sure everything is correct and I have'nt missed anything.
-In the meantime I built the project for the first time, and saw the data doesn't load properly. switching to development build to see what's going on.
+
+Finished with the bugfixes, now re-reading the instructions to make sure everything is correct and I have'nt missed
+anything.
+In the meantime I built the project for the first time, and saw the data doesn't load properly. switching to development
+build to see what's going on.
 
 Saw we're missing expand/collapse all features, adding those.
 
@@ -438,4 +453,6 @@ selection, it's not a UI logic. Also move the search logic
 "
 
 #### 2315:
-pushed final touches and fixes, rebuilding to ensure the build-only bug was fixed (tried to fetch the UiDocument on Awake instead of waiting after OnEnable).
+
+pushed final touches and fixes, rebuilding to ensure the build-only bug was fixed (tried to fetch the UiDocument on
+Awake instead of waiting after OnEnable).
