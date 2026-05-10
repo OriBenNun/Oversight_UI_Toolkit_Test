@@ -47,10 +47,7 @@ namespace Interaction
 
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
         public string GetSelection() => _selectedNodeId;
-
-        // public bool IsValidDrop(string draggedId, string targetId)
-            // => _validator.IsValidDrop(draggedId, targetId);
-
+        
         public bool ExecuteDrop(string draggedId, string targetId, int insertIndex)
         {
             if (!_validator.IsValidDrop(draggedId, targetId)) return false;
