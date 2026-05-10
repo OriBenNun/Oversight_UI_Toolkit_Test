@@ -26,7 +26,7 @@ I'll start by saying that the architecture and prinicples I went by have changed
 started working on this assignment, and I felt how I better understand the task at hand and the tradeoffs with every
 iteration (documetned in the dev diary).
 
-**So here's the final architecture, written with Claude Sonnet 4.6 medium effort:**
+**So here's the final architecture, written with Claude Sonnet 4.6 medium effort (for better clarity and accuracy):**
 
 4 runtime handlers + 1 pure validator, explicit dependency chain, no mediator.
 
@@ -40,25 +40,39 @@ Layers (top → bottom)
 
 Each handler knows only the layers **below** it. No upward references.
 
-##### Most Important Tradeoffs:
+##### Main technical decisions and tradeoffs:
 
-1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine
-   for 2500 nodes, but not for 250k nodes. this will probably demand a completly different approach for the runtime data
-   structure.
+1. My first, and most important decision, was to start with an end-to-end implementation by Claude Code (with my
+   instructions and high-level architecture), and iterate over it while I'm getting into the trenches and imrove my
+   understanding of both UI Toolkit (which is a first time for me),
+   and the assignment's specific requirements, pitfalls, and the mindset behind it. I find this approach very helpful in
+   cases like this, where this is not neccesarily my comfort zone. It helps me quickly understand the new domain(s) and
+   adjust as I go forward (and sometimes back, but that's part of the learning process). I'd say it was a good call
+   overall. I feel like I saved a lot of time by not starting from scratch (although it seemed like going back and forth
+   for some time), while still finishing with a codebase I designed and know well.
+2. Using Dictionary<NodeId, TreeNode> for fast lookup of O(1). However, in practice we're being forced to use heap
+   allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.
 2. Using List<TreeNode> for the tree, which is not ideal for cache locality (although uses array under the hood, but we
-   don't ensure locality during allocation), but it's fine for 2500 nodes (like mentioned above).
+   don't ensure locality during allocation). Like mentioned above, this is fine for 2k nodes but probably not for 250k
+   nodes. This will most likely demand a different approach for the runtime data structure for 100K+ nodes (probably
+   plain array based).
 3. Using MonoBehaviours instead of pure C# classes for better readability and simplicity. Using pure C# classes could
-   squeeze more performance, but under the tight time constraints, the complexity of the code is more important than the
-   tiny bit of performance. (I did start with only pure C# classes and a single MonoBehaviour, but I later decided that
-   it's just pulls me back for no significant gain in this assignment context).
-4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster and cheaper in
-   terms of
-   performance, but it creates double dependencies and confuses responsibilities, which according to the instructions is
-   a more important focus of this assignment.
+   squeeze more performance if done right, but under the tight time constraints - the complexity of the code is more
+   important than the
+   tiny bit of performance. Improtrant to note that I actually did start with only pure C# classes and a single
+   MonoBehaviour, but I later decided that it's just pulls me back for no significant gain in this assignment context).
+4. Using event-based data flow instead of direct calls and reference holding (again, I started the other way and
+   switched). Reference holding would usually be faster and cheaper in
+   terms of performance, but it pulls toward double dependencies, redundant references, and confuses responsibilities,
+   which seems that according to
+   the instructions is a more important focus for this specific assignment.
 5. Anyone who needs data during runtime asks the DataHandler for it instead of holding a reference to it which was
    passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less
    optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow
    down and requests flow up.
+6. The IndexHandler keeps track of and updates the shown nodes with List<(TreeNode, depth, VisibilityState)>. This way,
+   we can be using the UI Toolkit's ListView component for virtualization and flat list rendering, and we know how to
+   render their tree structure (which is transparent to the ListView component) using the list.
 
 ## Dev Diary:
 
