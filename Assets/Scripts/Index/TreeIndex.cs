@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Oversight.Model;
+using Model;
 
-namespace Oversight.Index
+namespace Index
 {
     public class TreeIndex
     {

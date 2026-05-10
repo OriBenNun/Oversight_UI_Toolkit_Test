@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Index;
+using Model;
 using UnityEngine;
-using Oversight.Index;
-using Oversight.Model;
 
-namespace Oversight.UI
+namespace Runtime
 {
     public class IndexHandler : MonoBehaviour
     {

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Oversight.Model;
+using Model;
 
-namespace Oversight.Editor
+namespace Editor
 {
     public static class TreeDataGenerator
     {

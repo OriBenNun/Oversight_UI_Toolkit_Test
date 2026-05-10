@@ -1,9 +1,9 @@
 using System.Collections.Generic;
+using Model;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Oversight.Model;
 
-namespace Oversight.UI
+namespace Runtime
 {
     [RequireComponent(typeof(UIDocument))]
     public class RenderingHandler : MonoBehaviour

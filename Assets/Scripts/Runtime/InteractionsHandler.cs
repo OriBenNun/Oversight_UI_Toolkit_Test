@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Logic;
+using Model;
 using UnityEngine;
-using Oversight.Logic;
-using Oversight.Model;
 
-namespace Oversight.UI
+namespace Runtime
 {
     public class InteractionsHandler : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Oversight.UI
+namespace Runtime
 {
     public class TreeBootstrapper : MonoBehaviour
     {

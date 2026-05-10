@@ -1,4 +1,4 @@
-namespace Oversight.Model
+namespace Model
 {
     public enum LayerType { None, Map, Model3D, Camera, Sensor }
 }

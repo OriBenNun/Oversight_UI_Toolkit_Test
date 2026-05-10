@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Oversight.Data
+namespace Data
 {
     [CreateAssetMenu(fileName = "TreeData", menuName = "Oversight/Tree Data Asset")]
     public class TreeDataAsset : ScriptableObject

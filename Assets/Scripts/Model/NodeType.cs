@@ -1,4 +1,4 @@
-namespace Oversight.Model
+namespace Model
 {
     public enum NodeType { Item, Group }
 }

@@ -1,7 +1,7 @@
 using System;
-using Oversight.Model;
+using Model;
 
-namespace Oversight.Data
+namespace Data
 {
     [Serializable]
     public struct NodeData

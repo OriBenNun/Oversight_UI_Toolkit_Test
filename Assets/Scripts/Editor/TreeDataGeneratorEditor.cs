@@ -1,10 +1,10 @@
 using System.Collections.Generic;
+using Data;
+using Model;
 using UnityEditor;
 using UnityEngine;
-using Oversight.Model;
-using Oversight.Data;
 
-namespace Oversight.Editor
+namespace Editor
 {
     public static class TreeDataGeneratorEditor
     {

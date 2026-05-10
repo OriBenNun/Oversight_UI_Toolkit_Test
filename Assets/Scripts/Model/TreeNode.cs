@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Oversight.Model
+namespace Model
 {
     public enum VisibilityState { Visible, Hidden, Mixed }
 
