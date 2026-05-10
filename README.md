@@ -331,6 +331,8 @@ SSOT. then, make sure there aren't any redundant fields, old logic that is overk
 
 Me and Claude found only minor stuff to fix in regards to SOC here. most relevant is to pass a func instead of reference to the roots list to the DragDropValidator. That's to make the live-access intent explicit and remove the fragility.
 
+Manually changed another thing: removed the public IsValid from the interaction handler, and instead passing a reference of the validator to the rendering handler. 
+
 
 
 

@@ -18,6 +18,8 @@ namespace Interaction
             _dataHandler = data;
             _validator = new DragDropValidator(_indexHandler.GetNodeById, () => _dataHandler.Roots);
         }
+        
+        public DragDropValidator GetValidator() => _validator;
 
         public void ToggleExpand(string nodeId)
         {
@@ -34,7 +36,7 @@ namespace Interaction
 
             if (node.IsGroup)
             {
-                bool setVisible = node.ComputeVisibilityState() != VisibilityState.Visible;
+                var setVisible = node.ComputeVisibilityState() != VisibilityState.Visible;
                 SetVisibilityRecursive(node, setVisible);
             }
             else
@@ -45,17 +47,18 @@ namespace Interaction
 
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
         public string GetSelection() => _selectedNodeId;
-        
-        public bool IsValidDrop(string draggedId, string targetId)
-            => _validator.IsValidDrop(draggedId, targetId);
 
-        public void ExecuteDrop(string draggedId, string targetId, int insertIndex)
+        // public bool IsValidDrop(string draggedId, string targetId)
+            // => _validator.IsValidDrop(draggedId, targetId);
+
+        public bool ExecuteDrop(string draggedId, string targetId, int insertIndex)
         {
-            if (!IsValidDrop(draggedId, targetId)) return;
+            if (!_validator.IsValidDrop(draggedId, targetId)) return false;
             var dragged = _indexHandler.GetNodeById(draggedId);
             var newParent = _indexHandler.GetNodeById(targetId);
             var oldParent = _indexHandler.GetNodeById(dragged.ParentId);
             _dataHandler.MoveNode(dragged, oldParent, newParent, insertIndex);
+            return true;
         }
 
         private void SetVisibilityRecursive(TreeNode node, bool visible)
@@ -64,5 +67,6 @@ namespace Interaction
             foreach (var child in node.Children)
                 SetVisibilityRecursive(child, visible);
         }
+
     }
 }

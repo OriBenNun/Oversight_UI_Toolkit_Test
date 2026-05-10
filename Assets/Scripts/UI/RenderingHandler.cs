@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DragDropValidation;
 using Index;
 using Interaction;
 using Model;
@@ -15,6 +16,7 @@ namespace UI
         private TextField _searchField;
         private InteractionsHandler _interactions;
         private IndexHandler _indexHandler;
+        private DragDropValidator _validator;
 
         private float _searchDebounceTimer;
         private const float SearchDebounceSeconds = 0.3f;
@@ -25,17 +27,16 @@ namespace UI
         private string _draggedNodeId;
         private int _dragTargetIndex = -1;
 
-        public void Initialize(InteractionsHandler interactions, IndexHandler index)
+        public void Initialize(InteractionsHandler interactions, IndexHandler index, DragDropValidator validator)
         {
             _doc = GetComponent<UIDocument>();
             _interactions = interactions;
             _indexHandler = index;
+            _validator = validator;
         }
 
         private void OnEnable()
         {
-            if (_interactions == null) return;
-
             var root = _doc.rootVisualElement;
             _listView    = root.Q<ListView>("tree-list-view");
             _searchField = root.Q<TextField>("search-field");
@@ -50,11 +51,8 @@ namespace UI
 
         private void OnDisable()
         {
-            if (_indexHandler != null)
-            {
-                _indexHandler.OnFlatListInvalidated -= RebuildFlatList;
-                _indexHandler.OnRevealNode -= ScrollToNode;
-            }
+            _indexHandler.OnFlatListInvalidated -= RebuildFlatList;
+            _indexHandler.OnRevealNode -= ScrollToNode;
         }
 
         private void Update()
@@ -274,7 +272,7 @@ namespace UI
             if (hoveredIndex < 0) return;
 
             string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
-            _dragTargetIndex = _interactions.IsValidDrop(_draggedNodeId, targetId) ? hoveredIndex : -1;
+            _dragTargetIndex = _validator.IsValidDrop(_draggedNodeId, targetId) ? hoveredIndex : -1;
             _listView.RefreshItems();
         }
 
@@ -286,10 +284,9 @@ namespace UI
                 if (hoveredIndex >= 0)
                 {
                     string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
-                    if (_interactions.IsValidDrop(_draggedNodeId, targetId))
+                    if (_interactions.ExecuteDrop(_draggedNodeId, targetId, 0))
                     {
                         string revealId = _draggedNodeId;
-                        _interactions.ExecuteDrop(_draggedNodeId, targetId, 0);
                         _indexHandler.RevealNode(revealId);
                     }
                 }
