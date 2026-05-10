@@ -7,12 +7,12 @@ namespace DragDropValidation
     {
         private readonly Func<string, TreeNode> _getNode;
 
-        // newParentId is the group the dragged node would be inserted into (null = root level)
         public DragDropValidator(Func<string, TreeNode> getNode)
         {
             _getNode = getNode;
         }
-
+        
+        // newParentId is the group the dragged node would be inserted into (null = root level)
         public bool IsValidDrop(string draggedId, string newParentId)
         {
             if (newParentId == draggedId) return false; // Can't drop into self
