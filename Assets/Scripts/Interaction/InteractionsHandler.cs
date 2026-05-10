@@ -67,34 +67,7 @@ namespace Interaction
         }
 
         // ── Keyboard navigation ────────────────────────────────────────────────
-
-        // Returns the new flat list index after moving up (clamped at 0).
-        public int MoveSelectionUp()
-        {
-            var flatList = _indexHandler.FlatList;
-            if (flatList.Count == 0) return -1;
-            var current = flatList.FindIndex(t => t.node.NodeId == _selectedNodeId);
-            var next = Mathf.Max(0, current - 1);
-            _selectedNodeId = flatList[next].node.NodeId;
-            return next;
-        }
-
-        // Returns the new flat list index after moving down (clamped at end).
-        public int MoveSelectionDown()
-        {
-            var flatList = _indexHandler.FlatList;
-            if (flatList.Count == 0) return -1;
-            var current = flatList.FindIndex(t => t.node.NodeId == _selectedNodeId);
-            var next = Mathf.Min(flatList.Count - 1, current + 1);
-            _selectedNodeId = flatList[next].node.NodeId;
-            return next;
-        }
-
-        public void ToggleExpandSelected()
-        {
-            if (_selectedNodeId != null) ToggleExpand(_selectedNodeId);
-        }
-
+        
         // Returns the new flat list index to apply to ListView, or -1 if no index change is needed.
         public int HandleKeyDown(KeyCode keyCode)
         {
@@ -108,6 +81,33 @@ namespace Interaction
                     return -1;
                 default: return -1;
             }
+        }
+
+        // Returns the new flat list index after moving up (clamped at 0).
+        private int MoveSelectionUp()
+        {
+            var flatList = _indexHandler.FlatList;
+            if (flatList.Count == 0) return -1;
+            var current = flatList.FindIndex(t => t.node.NodeId == _selectedNodeId);
+            var next = Mathf.Max(0, current - 1);
+            _selectedNodeId = flatList[next].node.NodeId;
+            return next;
+        }
+
+        // Returns the new flat list index after moving down (clamped at end).
+        private int MoveSelectionDown()
+        {
+            var flatList = _indexHandler.FlatList;
+            if (flatList.Count == 0) return -1;
+            var current = flatList.FindIndex(t => t.node.NodeId == _selectedNodeId);
+            var next = Mathf.Min(flatList.Count - 1, current + 1);
+            _selectedNodeId = flatList[next].node.NodeId;
+            return next;
+        }
+
+        private void ToggleExpandSelected()
+        {
+            if (_selectedNodeId != null) ToggleExpand(_selectedNodeId);
         }
 
         // ── Expand / Visibility ────────────────────────────────────────────────
