@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Oversight.Data;
@@ -11,14 +12,31 @@ namespace Oversight.UI
         private List<TreeNode> _roots;
 
         public IReadOnlyList<TreeNode> Roots => _roots;
-        public List<TreeNode> MutableRoots => _roots;
+        public List<TreeNode> MutableRoots   => _roots;
 
-        public event System.Action OnDataMutated;
-        public void NotifyMutated() => OnDataMutated?.Invoke();
+        public event Action OnDataMutated;
 
         public void Initialize()
         {
             _roots = LoadOrGenerateTree();
+        }
+
+        public void MoveNode(TreeNode dragged, TreeNode oldParent, TreeNode newParent, int insertIndex)
+        {
+            if (oldParent == null)
+                _roots.Remove(dragged);
+            else
+                oldParent.RemoveChild(dragged);
+
+            dragged.SetParent(newParent?.NodeId);
+
+            int clamped = Math.Clamp(insertIndex, 0, newParent != null ? newParent.Children.Count : _roots.Count);
+            if (newParent == null)
+                _roots.Insert(clamped, dragged);
+            else
+                newParent.AddChild(dragged, clamped);
+
+            OnDataMutated?.Invoke();
         }
 
         private List<TreeNode> LoadOrGenerateTree()

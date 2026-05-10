@@ -10,8 +10,8 @@ namespace Oversight.UI
     {
         private IndexHandler _indexHandler;
         private DataHandler _dataHandler;
-        private TreeInteractionLogic _logic;
         private DragDropValidator _validator;
+        private string _selectedNodeId;
 
         public event Action OnFlatListInvalidated;
 
@@ -19,9 +19,7 @@ namespace Oversight.UI
         {
             _indexHandler = index;
             _dataHandler  = data;
-            _logic     = new TreeInteractionLogic(_indexHandler.Index);
-            _validator = new DragDropValidator(_indexHandler.Index, _dataHandler.MutableRoots);
-            _logic.OnFlatListInvalidated        += () => OnFlatListInvalidated?.Invoke();
+            _validator    = new DragDropValidator(_indexHandler.GetNodeById, _dataHandler.Roots);
             _indexHandler.OnFlatListInvalidated += () => OnFlatListInvalidated?.Invoke();
         }
 
@@ -31,18 +29,51 @@ namespace Oversight.UI
         public List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
             => _indexHandler.FilterNodes(query);
 
-        public void ToggleExpand(string nodeId)     => _logic.ToggleExpand(nodeId);
-        public void ToggleVisibility(string nodeId) => _logic.ToggleVisibility(nodeId);
-        public void SetSelection(string nodeId)     => _logic.SetSelection(nodeId);
-        public string GetSelection()                => _logic.GetSelection();
+        public void ToggleExpand(string nodeId)
+        {
+            var node = _indexHandler.GetNodeById(nodeId);
+            if (node == null) return;
+            node.SetExpanded(!node.IsExpanded);
+            _indexHandler.RebuildAndNotify();
+        }
+
+        public void ToggleVisibility(string nodeId)
+        {
+            var node = _indexHandler.GetNodeById(nodeId);
+            if (node == null) return;
+
+            if (node.IsGroup)
+            {
+                bool setVisible = node.ComputeVisibilityState() != VisibilityState.Visible;
+                SetVisibilityRecursive(node, setVisible);
+            }
+            else
+                node.SetVisible(!node.IsVisible);
+
+            _indexHandler.RebuildAndNotify();
+        }
+
+        public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
+        public string GetSelection()            => _selectedNodeId;
 
         public bool IsValidDrop(string draggedId, string targetId)
             => _validator.IsValidDrop(draggedId, targetId);
 
         public void ExecuteDrop(string draggedId, string targetId, int insertIndex)
         {
-            _validator.ExecuteDrop(draggedId, targetId, insertIndex);
-            _dataHandler.NotifyMutated();
+            if (!IsValidDrop(draggedId, targetId)) return;
+            var dragged   = _indexHandler.GetNodeById(draggedId);
+            var newParent = _indexHandler.GetNodeById(targetId);
+            if (dragged == null || newParent == null) return;
+            var oldParent = _indexHandler.GetNodeById(dragged.ParentId);
+            _dataHandler.MoveNode(dragged, oldParent, newParent, insertIndex);
+        }
+
+        private void SetVisibilityRecursive(TreeNode node, bool visible)
+        {
+            node.SetVisible(visible);
+            foreach (var child in node.Children)
+                SetVisibilityRecursive(child, visible);
         }
     }
 }

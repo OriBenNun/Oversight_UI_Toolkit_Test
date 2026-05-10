@@ -11,7 +11,6 @@ namespace Oversight.UI
         private DataHandler _dataHandler;
         private TreeIndex _index;
 
-        public TreeIndex Index => _index;
         public event Action OnFlatListInvalidated;
 
         public void Initialize(DataHandler data)
@@ -19,7 +18,16 @@ namespace Oversight.UI
             _dataHandler = data;
             _index = new TreeIndex();
             _index.Build(_dataHandler.MutableRoots);
-            _dataHandler.OnDataMutated += OnRebuild;
+            _dataHandler.OnDataMutated += OnRebuildFull;
+        }
+
+        public TreeNode GetNodeById(string id) => _index.GetNodeById(id);
+
+        public void RevealNode(string id) => _index.RevealNode(id);
+
+        public void RebuildAndNotify()
+        {
+            OnFlatListInvalidated?.Invoke();
         }
 
         public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
@@ -40,7 +48,7 @@ namespace Oversight.UI
             return result;
         }
 
-        private void OnRebuild()
+        private void OnRebuildFull()
         {
             _index.Build(_dataHandler.MutableRoots);
             OnFlatListInvalidated?.Invoke();
@@ -49,7 +57,7 @@ namespace Oversight.UI
         private void OnDestroy()
         {
             if (_dataHandler != null)
-                _dataHandler.OnDataMutated -= OnRebuild;
+                _dataHandler.OnDataMutated -= OnRebuildFull;
         }
     }
 }

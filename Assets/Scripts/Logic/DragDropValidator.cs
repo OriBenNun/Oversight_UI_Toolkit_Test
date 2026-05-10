@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
-using Oversight.Index;
 using Oversight.Model;
 
 namespace Oversight.Logic
 {
     public class DragDropValidator
     {
-        private readonly TreeIndex _index;
-        private readonly List<TreeNode> _roots;
+        private readonly Func<string, TreeNode> _getNode;
+        private readonly IReadOnlyList<TreeNode> _roots;
 
-        public DragDropValidator(TreeIndex index, List<TreeNode> roots)
+        public DragDropValidator(Func<string, TreeNode> getNode, IReadOnlyList<TreeNode> roots)
         {
-            _index = index;
-            _roots = roots;
+            _getNode = getNode;
+            _roots   = roots;
         }
 
         public bool IsValidDrop(string draggedId, string targetId)
@@ -21,11 +20,10 @@ namespace Oversight.Logic
             if (draggedId == targetId) return false;
             if (IsDescendant(draggedId, targetId)) return false;
 
-            var dragged = _index.GetNodeById(draggedId);
-            var target  = _index.GetNodeById(targetId);
+            var dragged = _getNode(draggedId);
+            var target  = _getNode(targetId);
             if (dragged == null || target == null) return false;
 
-            // Reject same parent + adjacent position (no-op reorder)
             if (dragged.ParentId == target.ParentId)
             {
                 var siblings = GetSiblingList(dragged.ParentId);
@@ -37,33 +35,14 @@ namespace Oversight.Logic
             return true;
         }
 
-        public void ExecuteDrop(string draggedId, string targetId, int insertIndex)
-        {
-            var dragged = _index.GetNodeById(draggedId);
-            var target  = _index.GetNodeById(targetId);
-            if (dragged == null || target == null) return;
-
-            // Detach from current parent
-            if (dragged.ParentId == null)
-                _roots.Remove(dragged);
-            else
-                _index.GetNodeById(dragged.ParentId)?.RemoveChild(dragged);
-
-            // Reparent
-            dragged.SetParent(targetId);
-            int clampedIndex = Math.Clamp(insertIndex, 0, target.Children.Count);
-            target.AddChild(dragged, clampedIndex);
-
-        }
-
         public bool IsDescendant(string ancestorId, string candidateId)
         {
-            var current = _index.GetNodeById(candidateId);
+            var current = _getNode(candidateId);
             if (current == null) return false;
 
             while (current.ParentId != null)
             {
-                current = _index.GetNodeById(current.ParentId);
+                current = _getNode(current.ParentId);
                 if (current == null) break;
                 if (current.NodeId == ancestorId) return true;
             }
@@ -73,7 +52,7 @@ namespace Oversight.Logic
         private IReadOnlyList<TreeNode> GetSiblingList(string parentId)
         {
             if (parentId == null) return _roots;
-            var parent = _index.GetNodeById(parentId);
+            var parent = _getNode(parentId);
             return parent?.Children ?? _roots;
         }
 
