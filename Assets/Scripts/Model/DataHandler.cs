@@ -11,8 +11,7 @@ namespace Model
         
         private List<TreeNode> _roots;
 
-        public IReadOnlyList<TreeNode> Roots => _roots;
-        public List<TreeNode> MutableRoots   => _roots;
+        public List<TreeNode> Roots => _roots;
 
         public event Action OnDataMutated;
 

@@ -8,15 +8,14 @@ namespace Index
     public class IndexHandler : MonoBehaviour
     {
         private DataHandler _dataHandler;
-        private Dictionary<string, TreeNode> _idMap = new();
-        private List<TreeNode> _roots = new();
+        private readonly Dictionary<string, TreeNode> _idMap = new();
 
         public event Action OnFlatListInvalidated;
 
         public void Initialize(DataHandler data)
         {
             _dataHandler = data;
-            Build(_dataHandler.MutableRoots);
+            Build();
             _dataHandler.OnDataMutated += OnRebuildFull;
         }
 
@@ -51,7 +50,7 @@ namespace Index
         public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
         {
             var result = new List<(TreeNode, int, VisibilityState)>();
-            foreach (var root in _roots)
+            foreach (var root in _dataHandler.Roots)
                 AppendShown(root, 0, result);
             return result;
         }
@@ -82,16 +81,15 @@ namespace Index
             }
 
             var filtered = new List<(TreeNode, int, VisibilityState)>();
-            foreach (var root in _roots)
+            foreach (var root in _dataHandler.Roots)
                 AppendFiltered(root, 0, included, filtered);
             return filtered;
         }
 
-        private void Build(List<TreeNode> roots)
+        private void Build()
         {
             _idMap.Clear();
-            _roots = roots;
-            foreach (var root in roots)
+            foreach (var root in _dataHandler.Roots)
                 RegisterNode(root);
         }
 
@@ -122,7 +120,7 @@ namespace Index
 
         private void OnRebuildFull()
         {
-            Build(_dataHandler.MutableRoots);
+            Build();
             OnFlatListInvalidated?.Invoke();
         }
     }

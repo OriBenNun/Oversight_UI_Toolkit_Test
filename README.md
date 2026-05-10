@@ -198,15 +198,26 @@ Also removing the tests, which were a nice feature Claude added, but it wasn't a
 
 Starting to go over all the generated code from top to bottom again. Starting with the model scripts.
 
-Model class (TreeNode) looks good. Simplified it a bit (changed to public ctr and other minor stuff)
+Model class (TreeNode) looks good. Simplified it a bit (changed to public ctr and other minor stuff).
 
 #### 1730:
 updated claude.md and splitted runtime classes between the folders (according to layers).
 
 Moving on to the index layer. starting by asking Claude to combine the pure C# class into the manager, as it doesn't actually benefit us, so combining will improve readability and still keep the file short enough.
 
+Moving back to DataHandler (missed it).
+Saw there are several List<TreeNode> there, so sent Claude:
+"
+I want a signle _roots list which is the mutable one. no need to keep a copy of the original roots list, it doesn't
+matter during runtime. anyone who needs to know about roots during runtime should ask the DataHandler for them, so we
+have a true SSOT
+"
+
+Now 
+
 Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.
 2. Using List<TreeNode> for _children, which is not ideal for cache locality (although uses array under the hood, but we don't ensure locality during allocation), but is fine for 2500 nodes.
 3. Using MonoBehaviours instead of pure C# classes for better readability and simplicity. Using pure C# classes could squeeze more performance, but under the tight time constraints, the complexity of the code is more important than the tiny bit of performance.
 4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster in terms of performance, but it creates double dependencies and confuses responsibilities, which according to the instructions is a more important focus of this assignment.
+5. Anyone who needs data during runtime asks the DataHandler for it instead of holding a reference to it which was passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow down and requests flow up.
