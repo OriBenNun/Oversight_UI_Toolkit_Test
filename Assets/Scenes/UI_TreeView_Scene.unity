@@ -311,7 +311,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c94f0c091645694da59d4f9a5adb0c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Model.DataHandler
-  _treeDataAsset: {fileID: 0}
+  _treeDataAsset: {fileID: 11400000, guid: 6da9e4ef055545b4a9c76083dbc43622, type: 2}
 --- !u!4 &344366810
 Transform:
   m_ObjectHideFlags: 0
