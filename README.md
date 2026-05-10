@@ -6,6 +6,14 @@
 2. open the project through the Unity Hub with the correct Unity Editor version (6000.4.5f1)
 3. run the project
 
+There is also a build of the project here: https://drive.google.com/file/d/1qR6QmCkdl7UdUGfDGuxQMqUlj1TtPaMT/view?usp=sharing
+
+To run the build:
+1. Extract the zip file
+2. Run the Oversight_UI_Toolkit_Test.exe file
+
+Video of the build: https://drive.google.com/file/d/1_8b1j0XhOREfxN_ZAiCTmNdegg7wuggr/view?usp=sharing
+
 To control the UI, you can:
 
 1. Use the mouse to select, and drag/drop nodes (while dragging a node, hovering between nodes will show a thin blue
@@ -71,6 +79,9 @@ Each handler knows only the layers **below** it. No upward references.
    passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less
    optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow
    down and requests flow up.
+6. GC pressure on every rebuild — each expand/collapse, filter, or drop allocates a brand new flat list and discards the
+   old one. Basically this triggers GC on every interaction with the list. Not noticable with 2K nodes, and fixable by
+   clearing and refilling the same list in-place, but not done here for simplicity sake.
 
 ##### How virtualization/indexing works
 
@@ -123,7 +134,39 @@ layers.
 Finally, the moved node is then revealed and scrolled into view (not an actual need, because this is basically
 achieved by design because the target is in view, but I wanted to use the RevealNode method at least twice).
 
-##### How drag/drop updates the model and rejects invalid moves
+##### Known limitations
+
+1. As mentioned above, my data structures selection is very suitable for 2500 nodes, and will probably work great with
+   up to 10K or even 50K nodes. But after that, the performance will probably start to drop and a different solution
+   will
+   be needed.
+2. The data sample is static and loaded and copied into memory once during startup, which means all runtime changes will
+   be lost when the application is closed. This is by design, but it's still a limitation nevertheless.
+3. No undo/redo — any drag/drop or visibility change is immediately committed to the runtime model. Everything can be
+   reverted manually, but it's a bit annoying, especially if the original group is forgotten too.
+3. I couldn't think of more limitations worth mentioning, and would love to hear from you if you find or can think of
+   any!
+
+##### Approximate time spent
+
+I believe my net work time is **about 10-11 hours.**
+I know that it's about 30% above the suggested time, but I believe the main reason was that, unfortunately, I wasn't
+able to do it in one sitting, but instead it was spread over a few days, sometimes giving me less than an hour of work
+time in a row. This is not an excuse, but I hope it will explain a bit why the time taken is a bit more than expected.
+However, I do believe the extra time wasn't taken to overbuild the assignment, but rather to ensure that I met the
+requirements of the assignment (while keeping it up to my standards).
+
+##### AI usage disclosure:
+
+I've used Claude Code Sonnet 4.6 (medium effort) to help me with almost every step of the process (except for this
+README file, and even here it helped a couple of times haha).
+I would say most of the codebase was originally written by Claude, but most if not all of it was changed during
+iterative process of me reading the code and suggested changes and instruct Claude how to proceed.
+I believe I explained in a lot of detail what my iterative approach was with this assignment earlier, however, to make
+my process as transparent as possible, and to give a better idea of how AI was used (as I cannot truly answer questions
+like "Which parts were AI-assisted" or mark "Any AI-generated code that remains in the submission"), I've tried to
+document as much of the process as possible below in the Dev Diary section below. I hope it will complete the picture
+about how I use AI with Unity.
 
 ## Dev Diary:
 
