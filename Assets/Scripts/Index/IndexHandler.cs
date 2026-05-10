@@ -38,7 +38,7 @@ namespace Index
         // Otherwise, we return the node associated with the id.
         public TreeNode GetNodeById(string id)
         {
-            if (string.IsNullOrEmpty(id)) return null;
+            if (id == null) return null;
             _idMap.TryGetValue(id, out var node);
             return node;
         }
