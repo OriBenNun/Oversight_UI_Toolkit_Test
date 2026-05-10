@@ -91,11 +91,11 @@ Pushed minor changes and bugfix due to runtime errors.
 
 Updated Claude.md with the current state of the project.
 
-Before moving on to reading the indexing layer, I want to create the data sample during editor-time instead of runtime (to improve startup loading times and have a stable dataset for testing).
+Before moving on to reading the indexing layer, I want to create the data sample during design-time instead of runtime (to improve startup loading times and have a stable dataset for testing).
 Also, adding missing layer types according to the assignment.
 Here's the plan prompt for Claude:
 "
-I want to create the data sample during editor-time instead of runtime.
+I want to create the data sample during design-time instead of runtime.
 Also, adding missing layer types according to the assignment, here's the quote from the instructions:
 The UI represents a mission planning layer panel. A user can manage:
 • Map layers
@@ -121,10 +121,10 @@ awered
 Added another clarification after the 2nd iteration:
 "
 The GUIDs should never change, not for the static nor the live data model, so
-we can safely generate it during editor time.
+we can safely generate it during design time.
 "
 
-pushed the editor time generation refactor.
+pushed the design time generation refactor.
 pushed small dict null check bugfix in GetNodeById, detected during runtime test.
 changed Resource folder fetch to [SerializedField] on TreeViewController for better runtime performance and static access.
 
@@ -213,7 +213,15 @@ matter during runtime. anyone who needs to know about roots during runtime shoul
 have a true SSOT
 "
 
-Now 
+#### 1800:
+Looking good. Now DataHandler acts as the SSOT of the tree data during runtime. The tree data is represented by a List<TreeNode> of the root nodes (the top groups), each holding a List<TreeNode> of its children. which means this is a classic DFS tree structure.
+The class is responsible for loading the static data (generated during design time), keeping and mutating the data by request by other managers. no one else keeps a reference to it, always asks.
+
+
+
+
+
+
 
 Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.
