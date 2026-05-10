@@ -232,7 +232,37 @@ We should trigger RevealNode in two cases:
    be in focus)
 "
 
+#### 1900:
+Saw another issue, sent Claude:
+"
+why do we need to rebuild the entire index dictionary when the data changes? it should'nt affect the Dict, as it's
+unordered at all
+"
 
+And another issue:
+"
+The IndexHandler should be the owner of the flatList, RenderingHandler should handle only UI Toolkit wiring stuff.
+it's just the bridge, no business logic should be there.
+"
+
+continued with:
+"
+but now there are many dups and redundancy between the IndexHandler and the Rendering. It's fine for the rendering to
+know IndexHandler directly and not go through Interactions for everything.
+"
+
+Now IndexHandler code looks good. It owns the FlatList, the index dictionary, and the search/filter logic.
+
+The search/filter is implemented in a two-pass approach:
+1. First pass builds all included nodes in an unordered way (including ancestors).
+2. Second pass outputs in correct DFS order, when we already know exactly what to keep.
+
+The flat list is a List<(TreeNode node, int depth, VisibilityState visState)>. The reason we need it is that
+the ListView UXML component is a flat list widget. It has no concept of tree hierarchy, expand/collapse, depth, or filtering. Our custom
+flat list is the tree view implementation:
+- Collapsed group node → its children are simply absent from the list
+- Depth field → drives indent spacer width
+- Filter → rebuilds the flat list only (doesn't affect the index dictionary or the tree structure) with only matching nodes + their ancestors
 
 
 

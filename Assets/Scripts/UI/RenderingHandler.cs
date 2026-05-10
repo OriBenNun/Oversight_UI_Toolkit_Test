@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Index;
 using Logic;
 using Model;
 using UnityEngine;
@@ -13,22 +14,22 @@ namespace UI
         private ListView _listView;
         private TextField _searchField;
         private InteractionsHandler _interactions;
-
-        private List<(TreeNode node, int depth, VisibilityState visState)> _flatList = new();
+        private IndexHandler _indexHandler;
 
         private float _searchDebounceTimer;
         private const float SearchDebounceSeconds = 0.3f;
         private string _pendingQuery;
-        private string _activeQuery;
+        private bool _isSearchActive;
         private bool _searchDirty;
 
         private string _draggedNodeId;
         private int _dragTargetIndex = -1;
 
-        public void Initialize(InteractionsHandler interactions)
+        public void Initialize(InteractionsHandler interactions, IndexHandler index)
         {
             _doc = GetComponent<UIDocument>();
             _interactions = interactions;
+            _indexHandler = index;
         }
 
         private void OnEnable()
@@ -42,17 +43,17 @@ namespace UI
             SetupListView();
             SetupSearch();
             SetupKeyboard();
-            _interactions.OnFlatListInvalidated += RebuildFlatList;
-            _interactions.OnRevealNode += ScrollToNode;
+            _indexHandler.OnFlatListInvalidated += RebuildFlatList;
+            _indexHandler.OnRevealNode += ScrollToNode;
             RebuildFlatList();
         }
 
         private void OnDisable()
         {
-            if (_interactions != null)
+            if (_indexHandler != null)
             {
-                _interactions.OnFlatListInvalidated -= RebuildFlatList;
-                _interactions.OnRevealNode -= ScrollToNode;
+                _indexHandler.OnFlatListInvalidated -= RebuildFlatList;
+                _indexHandler.OnRevealNode -= ScrollToNode;
             }
         }
 
@@ -121,8 +122,8 @@ namespace UI
 
         private void BindRow(VisualElement element, int index)
         {
-            if (index < 0 || index >= _flatList.Count) return;
-            var (node, depth, visState) = _flatList[index];
+            if (index < 0 || index >= _indexHandler.FlatList.Count) return;
+            var (node, depth, visState) = _indexHandler.FlatList[index];
 
             var spacer = element.Q("indent");
             var toggle = element.Q<Button>("toggle");
@@ -174,26 +175,18 @@ namespace UI
 
         private void RebuildFlatList()
         {
-            _flatList = string.IsNullOrWhiteSpace(_activeQuery)
-                ? _interactions.BuildFlatList()
-                : _interactions.FilterNodes(_activeQuery);
-            _listView.itemsSource = _flatList;
+            _listView.itemsSource = _indexHandler.FlatList;
             _listView.RefreshItems();
             ResolveSelectionIndex();
         }
 
         private void ApplySearch(string query)
         {
-            bool wasSearchActive = !string.IsNullOrWhiteSpace(_activeQuery);
-            _activeQuery = query;
-            _flatList = string.IsNullOrWhiteSpace(query)
-                ? _interactions.BuildFlatList()
-                : _interactions.FilterNodes(query);
-            _listView.itemsSource = _flatList;
-            _listView.RefreshItems();
-            ResolveSelectionIndex();
+            bool wasSearchActive = _isSearchActive;
+            _isSearchActive = !string.IsNullOrWhiteSpace(query);
+            _indexHandler.SetFilter(query);
 
-            if (wasSearchActive && string.IsNullOrWhiteSpace(query))
+            if (wasSearchActive && !_isSearchActive)
             {
                 var sel = _interactions.GetSelection();
                 if (sel != null) _interactions.RevealNode(sel);
@@ -205,8 +198,8 @@ namespace UI
         private void OnSelectionChanged(IEnumerable<object> _)
         {
             int idx = _listView.selectedIndex;
-            if (idx < 0 || idx >= _flatList.Count) return;
-            _interactions.SetSelection(_flatList[idx].node.NodeId);
+            if (idx < 0 || idx >= _indexHandler.FlatList.Count) return;
+            _interactions.SetSelection(_indexHandler.FlatList[idx].node.NodeId);
             _listView.RefreshItems();
         }
 
@@ -214,7 +207,7 @@ namespace UI
         {
             var sel = _interactions.GetSelection();
             if (sel == null) return;
-            int idx = _flatList.FindIndex(t => t.node.NodeId == sel);
+            int idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == sel);
             if (idx >= 0)
                 _listView.SetSelectionWithoutNotify(new[] { idx });
         }
@@ -246,16 +239,16 @@ namespace UI
                 {
                     int next = Mathf.Max(0, _listView.selectedIndex - 1);
                     _listView.selectedIndex = next;
-                    _interactions.SetSelection(_flatList[next].node.NodeId);
+                    _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
                     _listView.RefreshItems();
                     evt.StopPropagation();
                     break;
                 }
                 case KeyCode.DownArrow:
                 {
-                    int next = Mathf.Min(_flatList.Count - 1, _listView.selectedIndex + 1);
+                    int next = Mathf.Min(_indexHandler.FlatList.Count - 1, _listView.selectedIndex + 1);
                     _listView.selectedIndex = next;
-                    _interactions.SetSelection(_flatList[next].node.NodeId);
+                    _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
                     _listView.RefreshItems();
                     evt.StopPropagation();
                     break;
@@ -280,7 +273,7 @@ namespace UI
             int hoveredIndex = IndexAtY(evt.localPosition.y);
             if (hoveredIndex < 0) return;
 
-            string targetId = _flatList[hoveredIndex].node.NodeId;
+            string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
             _dragTargetIndex = _interactions.IsValidDrop(_draggedNodeId, targetId) ? hoveredIndex : -1;
             _listView.RefreshItems();
         }
@@ -292,7 +285,7 @@ namespace UI
                 int hoveredIndex = IndexAtY(evt.localPosition.y);
                 if (hoveredIndex >= 0)
                 {
-                    string targetId = _flatList[hoveredIndex].node.NodeId;
+                    string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
                     if (_interactions.IsValidDrop(_draggedNodeId, targetId))
                     {
                         string revealId = _draggedNodeId;
@@ -316,16 +309,16 @@ namespace UI
 
         private void ScrollToNode(string id)
         {
-            int idx = _flatList.FindIndex(t => t.node.NodeId == id);
+            int idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == id);
             if (idx >= 0)
                 _listView.ScrollToItem(idx);
         }
 
         private int IndexAtY(float y)
         {
-            if (_flatList.Count == 0) return -1;
+            if (_indexHandler.FlatList.Count == 0) return -1;
             int idx = Mathf.FloorToInt(y / _listView.fixedItemHeight);
-            return Mathf.Clamp(idx, 0, _flatList.Count - 1);
+            return Mathf.Clamp(idx, 0, _indexHandler.FlatList.Count - 1);
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Index;
 using Model;
 using UnityEngine;
@@ -13,30 +11,19 @@ namespace Logic
         private DragDropValidator _validator;
         private string _selectedNodeId;
 
-        public event Action OnFlatListInvalidated;
-        public event Action<string> OnRevealNode;
-
         public void Initialize(IndexHandler index, DataHandler data)
         {
             _indexHandler = index;
             _dataHandler = data;
             _validator = new DragDropValidator(_indexHandler.GetNodeById, _dataHandler.Roots);
-            _indexHandler.OnFlatListInvalidated += () => OnFlatListInvalidated?.Invoke();
-            _indexHandler.OnRevealNode += id => OnRevealNode?.Invoke(id);
         }
-
-        public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
-            => _indexHandler.BuildFlatList();
-
-        public List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
-            => _indexHandler.FilterNodes(query);
 
         public void ToggleExpand(string nodeId)
         {
             var node = _indexHandler.GetNodeById(nodeId);
             if (node == null) return;
             node.SetExpanded(!node.IsExpanded);
-            _indexHandler.RebuildAndNotify();
+            _indexHandler.NotifyRebuildNeeded();
         }
 
         public void ToggleVisibility(string nodeId)
@@ -52,7 +39,7 @@ namespace Logic
             else
                 node.SetVisible(!node.IsVisible);
 
-            _indexHandler.RebuildAndNotify();
+            _indexHandler.NotifyRebuildNeeded();
         }
 
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;

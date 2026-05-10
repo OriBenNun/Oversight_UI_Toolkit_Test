@@ -9,21 +9,26 @@ namespace Index
     {
         private DataHandler _dataHandler;
         private readonly Dictionary<string, TreeNode> _idMap = new();
+        private List<(TreeNode node, int depth, VisibilityState visState)> _flatList = new();
+        private string _activeQuery;
 
         public event Action OnFlatListInvalidated;
         public event Action<string> OnRevealNode;
 
+        public List<(TreeNode node, int depth, VisibilityState visState)> FlatList => _flatList;
+
         public void Initialize(DataHandler data)
         {
             _dataHandler = data;
-            Build();
-            _dataHandler.OnDataMutated += OnRebuildFull;
+            BuildIndexData();
+            RebuildFlatList();
+            _dataHandler.OnDataMutated += NotifyRebuildNeeded;
         }
 
         private void OnDestroy()
         {
             if (_dataHandler)
-                _dataHandler.OnDataMutated -= OnRebuildFull;
+                _dataHandler.OnDataMutated -= NotifyRebuildNeeded;
         }
 
         // Index-based lookup (by string id)
@@ -55,13 +60,30 @@ namespace Index
                 current = GetNodeById(current.ParentId);
             }
 
-            RebuildAndNotify();
+            NotifyRebuildNeeded();
             OnRevealNode?.Invoke(id);
         }
 
-        public void RebuildAndNotify() => OnFlatListInvalidated?.Invoke();
+        public void SetFilter(string query)
+        {
+            _activeQuery = query;
+            NotifyRebuildNeeded();
+        }
 
-        public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
+        public void NotifyRebuildNeeded()
+        {
+            RebuildFlatList();
+            OnFlatListInvalidated?.Invoke();
+        }
+
+        private void RebuildFlatList()
+        {
+            _flatList = string.IsNullOrWhiteSpace(_activeQuery)
+                ? BuildFlatList()
+                : FilterNodes(_activeQuery);
+        }
+
+        private List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
         {
             var result = new List<(TreeNode, int, VisibilityState)>();
             foreach (var root in _dataHandler.Roots)
@@ -69,7 +91,10 @@ namespace Index
             return result;
         }
 
-        public List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
+        // Simple search/filter by name (using Contains)
+        // We use HashSet for fast lookups and a two-pass approach — first pass builds all included in unordered way (including ancestors). Second pass outputs in correct DFS
+        // order, when we already know exactly what to keep.
+        private List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
         {
             if (string.IsNullOrWhiteSpace(query))
                 return BuildFlatList();
@@ -100,7 +125,7 @@ namespace Index
             return filtered;
         }
 
-        private void Build()
+        private void BuildIndexData()
         {
             _idMap.Clear();
             foreach (var root in _dataHandler.Roots)
@@ -124,18 +149,13 @@ namespace Index
             }
         }
 
-        private void AppendFiltered(TreeNode node, int depth, HashSet<string> included, List<(TreeNode, int, VisibilityState)> result)
+        private void AppendFiltered(TreeNode node, int depth, HashSet<string> included,
+            List<(TreeNode, int, VisibilityState)> result)
         {
             if (!included.Contains(node.NodeId)) return;
             result.Add((node, depth, node.ComputeVisibilityState()));
             foreach (var child in node.Children)
                 AppendFiltered(child, depth + 1, included, result);
-        }
-
-        private void OnRebuildFull()
-        {
-            Build();
-            OnFlatListInvalidated?.Invoke();
         }
     }
 }

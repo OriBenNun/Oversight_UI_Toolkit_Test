@@ -16,6 +16,6 @@ public class TreeBootstrapper : MonoBehaviour
         _data.Initialize();
         _index.Initialize(_data);
         _interactions.Initialize(_index, _data);
-        _rendering.Initialize(_interactions);
+        _rendering.Initialize(_interactions, _index);
     }
 }
