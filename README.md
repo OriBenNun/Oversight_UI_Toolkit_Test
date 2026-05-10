@@ -313,6 +313,9 @@ flat list is the tree view implementation:
 ---- Taking a quick break ----
 
 #### 2000:
+small bugfix (changed string.IsNullOrEmpty to id == null). index is not the place to enforce empty ids (should accept them)
+
+Finished with IndexHandler, moving on to the logic layer.
 
 
 

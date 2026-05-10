@@ -1,8 +1,9 @@
+using DragDropValidation;
 using Index;
 using Model;
 using UnityEngine;
 
-namespace Logic
+namespace Interaction
 {
     public class InteractionsHandler : MonoBehaviour
     {

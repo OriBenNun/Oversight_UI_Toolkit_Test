@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Model;
 
-namespace Logic
+namespace DragDropValidation
 {
     public class DragDropValidator
     {

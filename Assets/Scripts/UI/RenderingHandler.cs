@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Index;
-using Logic;
+using Interaction;
 using Model;
 using UnityEngine;
 using UnityEngine.UIElements;
