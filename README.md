@@ -203,7 +203,7 @@ Model class (TreeNode) looks good. Simplified it a bit (changed to public ctr an
 #### 1730:
 updated claude.md and splitted runtime classes between the folders (according to layers).
 
-Moving on to the index layer, now 2 classes: 
+Moving on to the index layer. starting by asking Claude to combine the pure C# class into the manager, as it doesn't actually benefit us, so combining will improve readability and still keep the file short enough.
 
 Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.

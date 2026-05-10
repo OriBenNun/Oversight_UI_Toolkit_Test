@@ -10,7 +10,9 @@
       "Bash(Sort-Object FullName)",
       "Bash(Get-ChildItem *)",
       "PowerShell(Get-ChildItem \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\\\\Scripts\" -Directory | Where-Object {$_.Name -eq \"Editor\"})",
-      "PowerShell(Get-ChildItem \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\" -Directory | Where-Object {$_.Name -eq \"Editor\"})"
+      "PowerShell(Get-ChildItem \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\" -Directory | Where-Object {$_.Name -eq \"Editor\"})",
+      "Bash(Remove-Item \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\\\\Scripts\\\\Index\\\\TreeIndex.cs\" -Force)",
+      "Bash(Remove-Item \"D:\\\\Dev\\\\Tests\\\\Oversight_UI_Toolkit_Assignment\\\\Oversight_UI_Toolkit_Test\\\\Assets\\\\Scripts\\\\Index\\\\TreeIndex.cs.meta\" -ErrorAction SilentlyContinue -Force)"
     ]
   }
 }

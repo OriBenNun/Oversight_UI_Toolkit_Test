@@ -8,55 +8,122 @@ namespace Index
     public class IndexHandler : MonoBehaviour
     {
         private DataHandler _dataHandler;
-        private TreeIndex _index;
+        private Dictionary<string, TreeNode> _idMap = new();
+        private List<TreeNode> _roots = new();
 
         public event Action OnFlatListInvalidated;
 
         public void Initialize(DataHandler data)
         {
             _dataHandler = data;
-            _index = new TreeIndex();
-            _index.Build(_dataHandler.MutableRoots);
+            Build(_dataHandler.MutableRoots);
             _dataHandler.OnDataMutated += OnRebuildFull;
-        }
-
-        public TreeNode GetNodeById(string id) => _index.GetNodeById(id);
-
-        public void RevealNode(string id) => _index.RevealNode(id);
-
-        public void RebuildAndNotify()
-        {
-            OnFlatListInvalidated?.Invoke();
-        }
-
-        public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
-        {
-            var raw = _index.BuildFlatList();
-            var result = new List<(TreeNode, int, VisibilityState)>(raw.Count);
-            foreach (var (node, depth) in raw)
-                result.Add((node, depth, node.ComputeVisibilityState()));
-            return result;
-        }
-
-        public List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
-        {
-            var raw = _index.FilterNodes(query);
-            var result = new List<(TreeNode, int, VisibilityState)>(raw.Count);
-            foreach (var (node, depth) in raw)
-                result.Add((node, depth, node.ComputeVisibilityState()));
-            return result;
-        }
-
-        private void OnRebuildFull()
-        {
-            _index.Build(_dataHandler.MutableRoots);
-            OnFlatListInvalidated?.Invoke();
         }
 
         private void OnDestroy()
         {
             if (_dataHandler != null)
                 _dataHandler.OnDataMutated -= OnRebuildFull;
+        }
+
+        public TreeNode GetNodeById(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            _idMap.TryGetValue(id, out var node);
+            return node;
+        }
+
+        public void RevealNode(string id)
+        {
+            var node = GetNodeById(id);
+            if (node == null) return;
+
+            var current = GetNodeById(node.ParentId);
+            while (current != null)
+            {
+                current.SetExpanded(true);
+                current = GetNodeById(current.ParentId);
+            }
+        }
+
+        public void RebuildAndNotify() => OnFlatListInvalidated?.Invoke();
+
+        public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
+        {
+            var result = new List<(TreeNode, int, VisibilityState)>();
+            foreach (var root in _roots)
+                AppendShown(root, 0, result);
+            return result;
+        }
+
+        public List<(TreeNode node, int depth, VisibilityState visState)> FilterNodes(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                return BuildFlatList();
+
+            var q = query.ToLowerInvariant();
+
+            var matchIds = new HashSet<string>();
+            foreach (var kv in _idMap)
+            {
+                if (kv.Value.DisplayName.ToLowerInvariant().Contains(q))
+                    matchIds.Add(kv.Key);
+            }
+
+            var included = new HashSet<string>(matchIds);
+            foreach (var id in matchIds)
+            {
+                var ancestor = GetNodeById(GetNodeById(id)?.ParentId);
+                while (ancestor != null)
+                {
+                    included.Add(ancestor.NodeId);
+                    ancestor = GetNodeById(ancestor.ParentId);
+                }
+            }
+
+            var filtered = new List<(TreeNode, int, VisibilityState)>();
+            foreach (var root in _roots)
+                AppendFiltered(root, 0, included, filtered);
+            return filtered;
+        }
+
+        private void Build(List<TreeNode> roots)
+        {
+            _idMap.Clear();
+            _roots = roots;
+            foreach (var root in roots)
+                RegisterNode(root);
+        }
+
+        private void RegisterNode(TreeNode node)
+        {
+            _idMap[node.NodeId] = node;
+            foreach (var child in node.Children)
+                RegisterNode(child);
+        }
+
+        private void AppendShown(TreeNode node, int depth, List<(TreeNode, int, VisibilityState)> result)
+        {
+            result.Add((node, depth, node.ComputeVisibilityState()));
+            if (node.IsExpanded)
+            {
+                foreach (var child in node.Children)
+                    AppendShown(child, depth + 1, result);
+            }
+        }
+
+        private void AppendFiltered(TreeNode node, int depth, HashSet<string> included, List<(TreeNode, int, VisibilityState)> result)
+        {
+            if (!included.Contains(node.NodeId)) return;
+            result.Add((node, depth, node.ComputeVisibilityState()));
+            foreach (var child in node.Children)
+                AppendFiltered(child, depth + 1, included, result);
+        }
+
+        private void OnRebuildFull()
+        {
+            Build(_dataHandler.MutableRoots);
+            OnFlatListInvalidated?.Invoke();
         }
     }
 }
