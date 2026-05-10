@@ -335,8 +335,20 @@ Manually changed another thing: removed the public IsValid from the interaction 
 
 Rest of the class looks good.
 
+#### 2100:
+Moved on to the validator. everything looks good, just had to fix one missing rejection rule when the target is not a group node.
 
+Went back to add missing and bugged use-cases for the drag/drop in the InteractionHandler.
+Here's the prompt:
+"
+our drag/drop is missing one or two use-cases, fix it. it should allow:
+• Reordering items within the same group
+• Moving an item from one group to another
+• Moving a group under another group
+• Moving a node must preserve its children and subtree
+"
 
+Then I found and fixed two more bugs with the validator, one caused by Claude's recent change and one was an edge-case (when trying to move a non-group item to the root of the tree, outside of any groups).
 
 
 ## Most Important Tradeoffs:

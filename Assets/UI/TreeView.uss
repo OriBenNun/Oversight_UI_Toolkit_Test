@@ -94,7 +94,12 @@
 }
 
 
-.tree-row--drag-target {
+.tree-row--drop-before {
+    border-color: rgb(80, 160, 255);
+    border-top-width: 2px;
+}
+
+.tree-row--drop-after {
     border-color: rgb(80, 160, 255);
     border-bottom-width: 2px;
 }

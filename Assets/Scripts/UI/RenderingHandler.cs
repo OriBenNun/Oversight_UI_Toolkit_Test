@@ -26,6 +26,7 @@ namespace UI
 
         private string _draggedNodeId;
         private int _dragTargetIndex = -1;
+        private bool _insertBefore = true;
 
         public void Initialize(InteractionsHandler interactions, IndexHandler index, DragDropValidator validator)
         {
@@ -165,8 +166,8 @@ namespace UI
             else
                 element.RemoveFromClassList("tree-row--selected");
 
-            if (index == _dragTargetIndex) element.AddToClassList("tree-row--drag-target");
-            else                           element.RemoveFromClassList("tree-row--drag-target");
+            element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex &&  _insertBefore);
+            element.EnableInClassList("tree-row--drop-after",  index == _dragTargetIndex && !_insertBefore);
         }
 
         // ── Flat list ──────────────────────────────────────────────────────────
@@ -180,7 +181,7 @@ namespace UI
 
         private void ApplySearch(string query)
         {
-            bool wasSearchActive = _isSearchActive;
+            var wasSearchActive = _isSearchActive;
             _isSearchActive = !string.IsNullOrWhiteSpace(query);
             _indexHandler.SetFilter(query);
 
@@ -195,7 +196,7 @@ namespace UI
 
         private void OnSelectionChanged(IEnumerable<object> _)
         {
-            int idx = _listView.selectedIndex;
+            var idx = _listView.selectedIndex;
             if (idx < 0 || idx >= _indexHandler.FlatList.Count) return;
             _interactions.SetSelection(_indexHandler.FlatList[idx].node.NodeId);
             _listView.RefreshItems();
@@ -205,7 +206,7 @@ namespace UI
         {
             var sel = _interactions.GetSelection();
             if (sel == null) return;
-            int idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == sel);
+            var idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == sel);
             if (idx >= 0)
                 _listView.SetSelectionWithoutNotify(new[] { idx });
         }
@@ -235,7 +236,7 @@ namespace UI
             {
                 case KeyCode.UpArrow:
                 {
-                    int next = Mathf.Max(0, _listView.selectedIndex - 1);
+                    var next = Mathf.Max(0, _listView.selectedIndex - 1);
                     _listView.selectedIndex = next;
                     _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
                     _listView.RefreshItems();
@@ -244,7 +245,7 @@ namespace UI
                 }
                 case KeyCode.DownArrow:
                 {
-                    int next = Mathf.Min(_indexHandler.FlatList.Count - 1, _listView.selectedIndex + 1);
+                    var next = Mathf.Min(_indexHandler.FlatList.Count - 1, _listView.selectedIndex + 1);
                     _listView.selectedIndex = next;
                     _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
                     _listView.RefreshItems();
@@ -268,11 +269,26 @@ namespace UI
         {
             if (evt.pressedButtons != 1 || string.IsNullOrEmpty(_draggedNodeId)) return;
 
-            int hoveredIndex = IndexAtY(evt.localPosition.y);
-            if (hoveredIndex < 0) return;
+            var hoveredIndex = IndexAtY(evt.localPosition.y);
+            if (hoveredIndex < 0) { ClearDropTarget(); _listView.RefreshItems(); return; }
 
-            string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
-            _dragTargetIndex = _validator.IsValidDrop(_draggedNodeId, targetId) ? hoveredIndex : -1;
+            var hoveredNode = _indexHandler.FlatList[hoveredIndex].node;
+            if (hoveredNode.NodeId == _draggedNodeId) { ClearDropTarget(); _listView.RefreshItems(); return; }
+
+            var yInRow    = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
+            var before     = yInRow < _listView.fixedItemHeight * 0.5f;
+            var parentId = (!before && hoveredNode.IsGroup && hoveredNode.IsExpanded)
+                ? hoveredNode.NodeId
+                : hoveredNode.ParentId;
+
+            if (_validator.IsValidDrop(_draggedNodeId, parentId))
+            {
+                _dragTargetIndex = hoveredIndex;
+                _insertBefore    = before;
+            }
+            else
+                ClearDropTarget();
+
             _listView.RefreshItems();
         }
 
@@ -280,33 +296,39 @@ namespace UI
         {
             if (!string.IsNullOrEmpty(_draggedNodeId))
             {
-                int hoveredIndex = IndexAtY(evt.localPosition.y);
+                var hoveredIndex = IndexAtY(evt.localPosition.y);
                 if (hoveredIndex >= 0)
                 {
-                    string targetId = _indexHandler.FlatList[hoveredIndex].node.NodeId;
-                    if (_interactions.ExecuteDrop(_draggedNodeId, targetId, 0))
-                    {
-                        string revealId = _draggedNodeId;
-                        _indexHandler.RevealNode(revealId);
-                    }
+                    var hoveredNode  = _indexHandler.FlatList[hoveredIndex].node;
+                    var yInRow     = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
+                    var insertBefore = yInRow < _listView.fixedItemHeight * 0.5f;
+
+                    if (_interactions.ExecuteDrop(_draggedNodeId, hoveredNode.NodeId, insertBefore))
+                        _indexHandler.RevealNode(_draggedNodeId);
                 }
             }
 
-            _draggedNodeId   = null;
-            _dragTargetIndex = -1;
+            _draggedNodeId = null;
+            ClearDropTarget();
             _listView.RefreshItems();
         }
 
         private void OnListPointerLeave(PointerLeaveEvent evt)
         {
-            _draggedNodeId   = null;
-            _dragTargetIndex = -1;
+            _draggedNodeId = null;
+            ClearDropTarget();
             _listView.RefreshItems();
+        }
+
+        private void ClearDropTarget()
+        {
+            _dragTargetIndex = -1;
+            _insertBefore    = true;
         }
 
         private void ScrollToNode(string id)
         {
-            int idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == id);
+            var idx = _indexHandler.FlatList.FindIndex(t => t.node.NodeId == id);
             if (idx >= 0)
                 _listView.ScrollToItem(idx);
         }
@@ -314,7 +336,7 @@ namespace UI
         private int IndexAtY(float y)
         {
             if (_indexHandler.FlatList.Count == 0) return -1;
-            int idx = Mathf.FloorToInt(y / _listView.fixedItemHeight);
+            var idx = Mathf.FloorToInt(y / _listView.fixedItemHeight);
             return Mathf.Clamp(idx, 0, _indexHandler.FlatList.Count - 1);
         }
 
