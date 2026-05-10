@@ -3,6 +3,7 @@ using DragDropValidation;
 using Index;
 using Interaction;
 using Model;
+using static Interaction.DropMode;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -27,7 +28,10 @@ namespace UI
 
         private string _draggedNodeId;
         private int _dragTargetIndex = -1;
-        private bool _insertBefore = true;
+        private DropMode _dropMode = Before;
+
+        // Top/bottom tips of a group row trigger Before/After; the middle zone triggers Into.
+        private const float GroupTipFraction = 0.2f;
 
         public void Initialize(InteractionsHandler interactions, IndexHandler index, DragDropValidator validator)
         {
@@ -169,8 +173,9 @@ namespace UI
             else
                 element.RemoveFromClassList("tree-row--selected");
 
-            element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex && _insertBefore);
-            element.EnableInClassList("tree-row--drop-after", index == _dragTargetIndex && !_insertBefore);
+            element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex && _dropMode == Before);
+            element.EnableInClassList("tree-row--drop-into",   index == _dragTargetIndex && _dropMode == Into);
+            element.EnableInClassList("tree-row--drop-after",  index == _dragTargetIndex && _dropMode == After);
         }
 
         // ── Flat list ──────────────────────────────────────────────────────────
@@ -275,6 +280,7 @@ namespace UI
         {
             if (evt.pressedButtons != 1 || string.IsNullOrEmpty(_draggedNodeId)) return;
 
+            var scrollOffset = _listScrollView?.scrollOffset.y ?? 0f;
             var hoveredIndex = IndexAtY(evt.localPosition.y);
             if (hoveredIndex < 0)
             {
@@ -291,16 +297,14 @@ namespace UI
                 return;
             }
 
-            var yInRow = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
-            var before = yInRow < _listView.fixedItemHeight * 0.5f;
-            var parentId = (!before && hoveredNode.IsGroup && hoveredNode.IsExpanded)
-                ? hoveredNode.NodeId
-                : hoveredNode.ParentId;
+            var yInRow = (evt.localPosition.y + scrollOffset) - hoveredIndex * _listView.fixedItemHeight;
+            var mode = ComputeDropMode(hoveredNode, yInRow);
+            var parentId = mode == Into ? hoveredNode.NodeId : hoveredNode.ParentId;
 
             if (_validator.IsValidDrop(_draggedNodeId, parentId))
             {
                 _dragTargetIndex = hoveredIndex;
-                _insertBefore = before;
+                _dropMode = mode;
             }
             else
                 ClearDropTarget();
@@ -316,10 +320,11 @@ namespace UI
                 if (hoveredIndex >= 0)
                 {
                     var hoveredNode = _indexHandler.FlatList[hoveredIndex].node;
-                    var yInRow = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
-                    var insertBefore = yInRow < _listView.fixedItemHeight * 0.5f;
+                    var scrollOffset = _listScrollView?.scrollOffset.y ?? 0f;
+                    var yInRow = (evt.localPosition.y + scrollOffset) - hoveredIndex * _listView.fixedItemHeight;
+                    var mode = ComputeDropMode(hoveredNode, yInRow);
 
-                    if (_interactions.ExecuteDrop(_draggedNodeId, hoveredNode.NodeId, insertBefore))
+                    if (_interactions.ExecuteDrop(_draggedNodeId, hoveredNode.NodeId, mode))
                         _indexHandler.RevealNode(_draggedNodeId);
                 }
             }
@@ -339,7 +344,19 @@ namespace UI
         private void ClearDropTarget()
         {
             _dragTargetIndex = -1;
-            _insertBefore = true;
+            _dropMode = Before;
+        }
+
+        private DropMode ComputeDropMode(TreeNode hoveredNode, float yInRow)
+        {
+            if (hoveredNode.IsGroup)
+            {
+                var tip = _listView.fixedItemHeight * GroupTipFraction;
+                if (yInRow < tip) return Before;
+                if (yInRow > _listView.fixedItemHeight - tip) return After;
+                return Into;
+            }
+            return yInRow < _listView.fixedItemHeight * 0.5f ? Before : After;
         }
 
         private void ScrollToNode(string id)

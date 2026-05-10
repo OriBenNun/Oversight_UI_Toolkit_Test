@@ -1,6 +1,7 @@
 # UI Toolkit Assignment Submission for Oversight by Ori Ben Nun
 
 ##### How to open and run this project:
+
 1. clone this repository
 2. open the project through the Unity Hub with the correct Unity Editor version (6000.4.5f1)
 3. run the project
@@ -9,6 +10,30 @@
 
 ##### Architecture Overview:
 
+I'll start by saying that the architecture and prinicples I went by have changed quite significantly since I first
+started working on this assignment, and I felt how I better understand the task at hand and the tradeoffs with every
+iteration (documetned in the dev diary). So here's the final architecture, written with the help of Claude Sonnet 4.6
+medium effort:
+
+##### Most Important Tradeoffs:
+
+1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine
+   for 2500 nodes, but not for 250k nodes. this will probably demand a completly different approach for the runtime data
+   structure.
+2. Using List<TreeNode> for the tree, which is not ideal for cache locality (although uses array under the hood, but we
+   don't ensure locality during allocation), but it's fine for 2500 nodes (like mentioned above).
+3. Using MonoBehaviours instead of pure C# classes for better readability and simplicity. Using pure C# classes could
+   squeeze more performance, but under the tight time constraints, the complexity of the code is more important than the
+   tiny bit of performance. (I did start with only pure C# classes and a single MonoBehaviour, but I later decided that
+   it's just pulls me back for no significant gain in this assignment context).
+4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster and cheaper in
+   terms of
+   performance, but it creates double dependencies and confuses responsibilities, which according to the instructions is
+   a more important focus of this assignment.
+5. Anyone who needs data during runtime asks the DataHandler for it instead of holding a reference to it which was
+   passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less
+   optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow
+   down and requests flow up.
 
 ## Dev Diary:
 
@@ -311,6 +336,7 @@ The flat list is a List<(TreeNode node, int depth, VisibilityState visState)>. T
 the ListView UXML component is a flat list widget. It has no concept of tree hierarchy, expand/collapse, depth, or
 filtering (however it is responsible for the virtualization which is a huge benefit). Our custom
 flat list is the actual tree view implementation:
+
 - Collapsed group node → its children are simply absent from the list
 - Depth field → drives indent spacer width
 - Filter → rebuilds the flat list only (doesn't affect the index dictionary or the tree structure) with only matching
@@ -319,7 +345,9 @@ flat list is the actual tree view implementation:
 ---- Taking a quick break ----
 
 #### 2000:
-small bugfix (changed string.IsNullOrEmpty to id == null). index is not the place to enforce empty ids (should accept them)
+
+small bugfix (changed string.IsNullOrEmpty to id == null). index is not the place to enforce empty ids (should accept
+them)
 
 Finished with IndexHandler, moving on to the logic layer.
 Starting with a prompt for Claude:
@@ -329,14 +357,18 @@ seperation between interaction and drag/drop validation is following our current
 SSOT. then, make sure there aren't any redundant fields, old logic that is overkill or isn't needed anymore, etc.
 "
 
-Me and Claude found only minor stuff to fix in regards to SOC here. most relevant is to pass a func instead of reference to the roots list to the DragDropValidator. That's to make the live-access intent explicit and remove the fragility.
+Me and Claude found only minor stuff to fix in regards to SOC here. most relevant is to pass a func instead of reference
+to the roots list to the DragDropValidator. That's to make the live-access intent explicit and remove the fragility.
 
-Manually changed another thing: removed the public IsValid from the interaction handler, and instead passing a reference of the validator to the rendering handler. 
+Manually changed another thing: removed the public IsValid from the interaction handler, and instead passing a reference
+of the validator to the rendering handler.
 
 Rest of the class looks good.
 
 #### 2100:
-Moved on to the validator. everything looks good, just had to fix one missing rejection rule when the target is not a group node.
+
+Moved on to the validator. everything looks good, just had to fix one missing rejection rule when the target is not a
+group node.
 
 Went back to add missing and bugged use-cases for the drag/drop in the InteractionHandler.
 Here's the prompt:
@@ -348,33 +380,33 @@ our drag/drop is missing one or two use-cases, fix it. it should allow:
 • Moving a node must preserve its children and subtree
 "
 
-Then I found and fixed two more bugs with the validator, one caused by Claude's recent change and one was an edge-case (when trying to move a non-group item to the root of the tree, outside of any groups).
-
+Then I found and fixed two more bugs with the validator, one caused by Claude's recent change and one was an edge-case (
+when trying to move a non-group item to the root of the tree, outside of any groups).
 
 #### 2130:
+
 Started going through the RenderingHandler.
 Seems good, just added comments.
 
 #### 2150:
+
 Finished reading the codebase and I feel comfortable with the code and the architecture.
 Moving on to bug fixes.
-I'll start with the filtered list with acts very weird upon interacting with the items when filtered.
+I'll start with the filtered list which acts very weird upon interacting with the items when filtered.
 
+Easily fixed it with a single prompt, found 2 issues:
 
+1. Filter mode expand toggle: AppendFiltered ignores IsExpanded — clicking expand changes the glyph but no
+   children appear/disappear. Fix: hide the toggle when search is active.
+2. IndexAtY misses scroll offset: localPosition.y is viewport-relative, but calculation doesn't add
+   scrollView.scrollOffset.y — so drag/drop targets wrong rows when scrolled.
 
+Now moved to the last bug I could see. here's the prompt for Claude:
+"
+when dragging an item and hovering above a group (except for the very upper and bottom tips), the group
+should be highlighted (indicating the item will be moved there), and allow to drop it directly EVEN IF
+THE GROUP IS COLLAPSED
+"
 
-## Most Important Tradeoffs:
-1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine
-   for 2500 nodes, but not for 250k nodes.
-2. Using List<TreeNode> for _children, which is not ideal for cache locality (although uses array under the hood, but we
-   don't ensure locality during allocation), but is fine for 2500 nodes.
-3. Using MonoBehaviours instead of pure C# classes for better readability and simplicity. Using pure C# classes could
-   squeeze more performance, but under the tight time constraints, the complexity of the code is more important than the
-   tiny bit of performance.
-4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster and cheaper in terms of
-   performance, but it creates double dependencies and confuses responsibilities, which according to the instructions is
-   a more important focus of this assignment.
-5. Anyone who needs data during runtime asks the DataHandler for it instead of holding a reference to it which was
-   passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less
-   optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow
-   down and requests flow up.
+Also was easily fixed by Claude. We just added a new enum to keep track of the drop mode (so we have before, into and
+after), and added a corresponding USS class and Rendering simple logic

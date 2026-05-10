@@ -103,3 +103,9 @@
     border-color: rgb(80, 160, 255);
     border-bottom-width: 2px;
 }
+
+.tree-row--drop-into {
+    background-color: rgba(80, 160, 255, 0.25);
+    border-color: rgb(80, 160, 255);
+    border-width: 2px;
+}

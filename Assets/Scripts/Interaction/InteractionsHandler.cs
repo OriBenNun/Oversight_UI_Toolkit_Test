@@ -6,6 +6,8 @@ using UnityEngine;
 
 namespace Interaction
 {
+    public enum DropMode { Before, Into, After }
+
     public class InteractionsHandler : MonoBehaviour
     {
         private IndexHandler _indexHandler;
@@ -49,8 +51,8 @@ namespace Interaction
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
         public string GetSelection() => _selectedNodeId;
 
-        // insertBefore: true = insert before hoveredId, false = insert after (or as first child if hovered is an expanded group)
-        public bool ExecuteDrop(string draggedId, string hoveredId, bool insertBefore)
+        // mode: Before/After = sibling; Into = first child of hovered group (works on collapsed groups too)
+        public bool ExecuteDrop(string draggedId, string hoveredId, DropMode mode)
         {
             var dragged = _indexHandler.GetNodeById(draggedId);
             var hovered = _indexHandler.GetNodeById(hoveredId);
@@ -59,9 +61,9 @@ namespace Interaction
             string newParentId;
             int insertIndex;
 
-            if (!insertBefore && hovered.IsGroup && hovered.IsExpanded)
+            if (mode == DropMode.Into && hovered.IsGroup)
             {
-                // Insert as first child of the hovered expanded group
+                // Insert as first child of hovered group regardless of expanded state
                 newParentId = hovered.NodeId;
                 insertIndex = 0;
             }
@@ -71,7 +73,7 @@ namespace Interaction
                 newParentId = hovered.ParentId; // null means root level
                 var siblings = GetSiblingList(newParentId);
                 insertIndex = IndexInList(siblings, hovered);
-                if (!insertBefore) insertIndex++;
+                if (mode == DropMode.After) insertIndex++;
 
                 // After dragged is removed from the same parent, all subsequent sibling indices shift down by one
                 if (dragged.ParentId == newParentId)
