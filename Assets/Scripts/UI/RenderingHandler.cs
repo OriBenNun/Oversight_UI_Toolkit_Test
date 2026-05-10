@@ -43,13 +43,17 @@ namespace UI
             SetupSearch();
             SetupKeyboard();
             _interactions.OnFlatListInvalidated += RebuildFlatList;
+            _interactions.OnRevealNode += ScrollToNode;
             RebuildFlatList();
         }
 
         private void OnDisable()
         {
             if (_interactions != null)
+            {
                 _interactions.OnFlatListInvalidated -= RebuildFlatList;
+                _interactions.OnRevealNode -= ScrollToNode;
+            }
         }
 
         private void Update()
@@ -180,6 +184,7 @@ namespace UI
 
         private void ApplySearch(string query)
         {
+            bool wasSearchActive = !string.IsNullOrWhiteSpace(_activeQuery);
             _activeQuery = query;
             _flatList = string.IsNullOrWhiteSpace(query)
                 ? _interactions.BuildFlatList()
@@ -187,6 +192,12 @@ namespace UI
             _listView.itemsSource = _flatList;
             _listView.RefreshItems();
             ResolveSelectionIndex();
+
+            if (wasSearchActive && string.IsNullOrWhiteSpace(query))
+            {
+                var sel = _interactions.GetSelection();
+                if (sel != null) _interactions.RevealNode(sel);
+            }
         }
 
         // ── Selection ──────────────────────────────────────────────────────────
@@ -283,7 +294,11 @@ namespace UI
                 {
                     string targetId = _flatList[hoveredIndex].node.NodeId;
                     if (_interactions.IsValidDrop(_draggedNodeId, targetId))
+                    {
+                        string revealId = _draggedNodeId;
                         _interactions.ExecuteDrop(_draggedNodeId, targetId, 0);
+                        _interactions.RevealNode(revealId);
+                    }
                 }
             }
 
@@ -297,6 +312,13 @@ namespace UI
             _draggedNodeId   = null;
             _dragTargetIndex = -1;
             _listView.RefreshItems();
+        }
+
+        private void ScrollToNode(string id)
+        {
+            int idx = _flatList.FindIndex(t => t.node.NodeId == id);
+            if (idx >= 0)
+                _listView.ScrollToItem(idx);
         }
 
         private int IndexAtY(float y)

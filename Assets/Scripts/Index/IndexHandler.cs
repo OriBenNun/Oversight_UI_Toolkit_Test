@@ -11,6 +11,7 @@ namespace Index
         private readonly Dictionary<string, TreeNode> _idMap = new();
 
         public event Action OnFlatListInvalidated;
+        public event Action<string> OnRevealNode;
 
         public void Initialize(DataHandler data)
         {
@@ -21,10 +22,15 @@ namespace Index
 
         private void OnDestroy()
         {
-            if (_dataHandler != null)
+            if (_dataHandler)
                 _dataHandler.OnDataMutated -= OnRebuildFull;
         }
 
+        // Index-based lookup (by string id)
+        // We use a dictionary for a fast O(1) lookup.
+        // We have to check if the id is null to avoid null reference exceptions.
+        // If the id is null or wasn't found in the dictionary, we return null.
+        // Otherwise, we return the node associated with the id.
         public TreeNode GetNodeById(string id)
         {
             if (string.IsNullOrEmpty(id)) return null;
@@ -32,6 +38,11 @@ namespace Index
             return node;
         }
 
+        // Reveals a node and all its ancestors by setting their expanded state to true.
+        // We first get the node by id, and if it's null, we return.
+        // Then we get the parent node and set its expanded state to true.
+        // We repeat this process until we reach the root node.
+        // Finally, it rebuilds the flat list and scrolls the list to the node.
         public void RevealNode(string id)
         {
             var node = GetNodeById(id);
@@ -43,6 +54,9 @@ namespace Index
                 current.SetExpanded(true);
                 current = GetNodeById(current.ParentId);
             }
+
+            RebuildAndNotify();
+            OnRevealNode?.Invoke(id);
         }
 
         public void RebuildAndNotify() => OnFlatListInvalidated?.Invoke();

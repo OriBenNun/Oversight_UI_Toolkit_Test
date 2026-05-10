@@ -14,13 +14,15 @@ namespace Logic
         private string _selectedNodeId;
 
         public event Action OnFlatListInvalidated;
+        public event Action<string> OnRevealNode;
 
         public void Initialize(IndexHandler index, DataHandler data)
         {
             _indexHandler = index;
-            _dataHandler  = data;
-            _validator    = new DragDropValidator(_indexHandler.GetNodeById, _dataHandler.Roots);
+            _dataHandler = data;
+            _validator = new DragDropValidator(_indexHandler.GetNodeById, _dataHandler.Roots);
             _indexHandler.OnFlatListInvalidated += () => OnFlatListInvalidated?.Invoke();
+            _indexHandler.OnRevealNode += id => OnRevealNode?.Invoke(id);
         }
 
         public List<(TreeNode node, int depth, VisibilityState visState)> BuildFlatList()
@@ -54,7 +56,9 @@ namespace Logic
         }
 
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
-        public string GetSelection()            => _selectedNodeId;
+        public string GetSelection() => _selectedNodeId;
+
+        public void RevealNode(string id) => _indexHandler.RevealNode(id);
 
         public bool IsValidDrop(string draggedId, string targetId)
             => _validator.IsValidDrop(draggedId, targetId);
@@ -62,7 +66,7 @@ namespace Logic
         public void ExecuteDrop(string draggedId, string targetId, int insertIndex)
         {
             if (!IsValidDrop(draggedId, targetId)) return;
-            var dragged   = _indexHandler.GetNodeById(draggedId);
+            var dragged = _indexHandler.GetNodeById(draggedId);
             var newParent = _indexHandler.GetNodeById(targetId);
             if (dragged == null || newParent == null) return;
             var oldParent = _indexHandler.GetNodeById(dragged.ParentId);

@@ -217,6 +217,20 @@ have a true SSOT
 Looking good. Now DataHandler acts as the SSOT of the tree data during runtime. The tree data is represented by a List<TreeNode> of the root nodes (the top groups), each holding a List<TreeNode> of its children. which means this is a classic DFS tree structure.
 The class is responsible for loading the static data (generated during design time), keeping and mutating the data by request by other managers. no one else keeps a reference to it, always asks.
 
+#### 1820:
+Now moving back to the index layer, single MB class now: IndexHandler.
+The main idea: keep a dictionary of nodes by id for fast lookup, and a list of root nodes (on DataHandler) for fast DFS traversal (for search and filter).
+
+Sent Claude:
+"
+currently RevealNode is both isn't in use by nobody AND isn't completed according to the assignment instructions.
+Here's the quote about it: "RevealNode should expand parents and scroll to the item."
+So let's add a new event by the end of the method which calls the renderingHandler to scroll to the correct node.
+We should trigger RevealNode in two cases:
+1. after an item is dragged (so it will be in focus)
+2. after item was selected during a search, and then the user deleted the search term (so the found item will still
+   be in focus)
+"
 
 
 
