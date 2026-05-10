@@ -13,6 +13,7 @@ namespace UI
     {
         private UIDocument _doc;
         private ListView _listView;
+        private ScrollView _listScrollView;
         private TextField _searchField;
         private InteractionsHandler _interactions;
         private IndexHandler _indexHandler;
@@ -40,6 +41,7 @@ namespace UI
         {
             var root = _doc.rootVisualElement;
             _listView = root.Q<ListView>("tree-list-view");
+            _listScrollView = _listView.Q<ScrollView>();
             _searchField = root.Q<TextField>("search-field");
 
             SetupListView();
@@ -133,7 +135,8 @@ namespace UI
 
             spacer.style.width = depth * 16;
 
-            if (node.IsGroup)
+            // In filter mode expand/collapse is meaningless — AppendFiltered ignores IsExpanded — so hide the toggle.
+            if (node.IsGroup && !_isSearchActive)
             {
                 toggle.RemoveFromClassList("tree-toggle--hidden");
                 toggle.text = node.IsExpanded ? "▼" : "▶";
@@ -255,8 +258,11 @@ namespace UI
                 case KeyCode.Return:
                 case KeyCode.Space:
                 {
-                    var sel = _interactions.GetSelection();
-                    if (sel != null) _interactions.ToggleExpand(sel);
+                    if (!_isSearchActive)
+                    {
+                        var sel = _interactions.GetSelection();
+                        if (sel != null) _interactions.ToggleExpand(sel);
+                    }
                     evt.StopPropagation();
                     break;
                 }
@@ -346,7 +352,9 @@ namespace UI
         private int IndexAtY(float y)
         {
             if (_indexHandler.FlatList.Count == 0) return -1;
-            var idx = Mathf.FloorToInt(y / _listView.fixedItemHeight);
+            // localPosition.y is viewport-relative; add scroll offset to get absolute position in the list content.
+            var scrollOffset = _listScrollView?.scrollOffset.y ?? 0f;
+            var idx = Mathf.FloorToInt((y + scrollOffset) / _listView.fixedItemHeight);
             return Mathf.Clamp(idx, 0, _indexHandler.FlatList.Count - 1);
         }
 
