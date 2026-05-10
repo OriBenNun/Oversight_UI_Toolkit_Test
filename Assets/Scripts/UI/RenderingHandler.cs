@@ -149,7 +149,12 @@ namespace UI
             if (node.IsGroup) label.AddToClassList("tree-label--group");
             else label.RemoveFromClassList("tree-label--group");
 
-            visBtn.text = visState == VisibilityState.Visible ? "●" : visState == VisibilityState.Mixed ? "◑" : "○";
+            visBtn.text = visState switch
+            {
+                VisibilityState.Visible => "●",
+                VisibilityState.Mixed => "◑",
+                _ => "○"
+            };
             visBtn.EnableInClassList("tree-visibility-btn--visible", visState == VisibilityState.Visible);
             visBtn.EnableInClassList("tree-visibility-btn--mixed", visState == VisibilityState.Mixed);
             visBtn.EnableInClassList("tree-visibility-btn--hidden", visState == VisibilityState.Hidden);
@@ -354,12 +359,9 @@ namespace UI
 
         // ── Helpers ────────────────────────────────────────────────────────────
 
-        // Comment by Claude:
-        // RowData stores NodeId on each reused VisualElement via userData. Without it, drag start (line 116) can't know which
-        // node a row represents.
-        // userData is typed object, so a named class is cleaner than boxing a raw string — but you could replace it with just
-        // element.userData = node.NodeId and cast (string)row.userData on read. The class adds nothing functionally here; it's
-        // just a named wrapper.
+        // RowData stores NodeId on each reused VisualElement via userData.
+        // userData is typed object (out of our control), so a named class is cleaner than boxing a raw string
+        // it's basically just a named wrapper.
         private class RowData
         {
             public string NodeId;
