@@ -8,7 +8,7 @@ namespace Model
     public class DataHandler : MonoBehaviour
     {
         [SerializeField] private TreeDataAsset _treeDataAsset;
-        
+
         private List<TreeNode> _roots;
 
         public List<TreeNode> Roots => _roots;
@@ -19,16 +19,17 @@ namespace Model
         {
             _roots = LoadTreeData();
         }
-        
+
         private List<TreeNode> LoadTreeData()
         {
             if (_treeDataAsset?.Nodes?.Length > 0)
                 return ConstructTreeFromData(_treeDataAsset.Nodes);
 
-            Debug.LogError("[Oversight] TreeDataAsset not assigned. Drag TreeData.asset onto the DataHandler component.");
+            Debug.LogError(
+                "[Oversight] TreeDataAsset not assigned. Drag TreeData.asset onto the DataHandler component.");
             return new List<TreeNode>();
         }
-        
+
         private static List<TreeNode> ConstructTreeFromData(NodeData[] nodes)
         {
             var map = new Dictionary<string, TreeNode>(nodes.Length);
@@ -47,6 +48,7 @@ namespace Model
                 else if (map.TryGetValue(d.ParentId, out var parent))
                     parent.AddChild(node, parent.Children.Count);
             }
+
             return roots;
         }
 
