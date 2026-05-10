@@ -46,9 +46,9 @@ Assets/Resources/
 | **Enums** | `Model/NodeType.cs`, `Model/LayerType.cs` | `NodeType { Item, Group }`, `LayerType { None, Map, Model3D, Camera, Sensor }`, `VisibilityState { Visible, Hidden, Mixed }` (in TreeNode.cs) |
 | **Data Handler** | `Model/DataHandler.cs` | MonoBehaviour; loads `TreeDataAsset`, reconstructs tree from flat `NodeData[]`, exposes `Roots` (List<TreeNode>), `MoveNode(dragged, oldParent, newParent, insertIndex)`, `OnDataMutated` event |
 | **Index Handler** | `Index/IndexHandler.cs` | MonoBehaviour; owns `_idMap` dictionary + flat list; `Initialize(DataHandler)`, `GetNodeById(id)`, `RevealNode(id)`, `SetFilter(query)`, `NotifyRebuildNeeded()`, `FlatList` property, `OnFlatListInvalidated` event, `OnRevealNode` event |
-| **Drag/Drop Validator** | `DragDropValidation/DragDropValidator.cs` | Plain class; `IsValidDrop(draggedId, targetId)`, `IsDescendant(ancestorId, candidateId)`; constructed with `(Func<string,TreeNode>, IReadOnlyList<TreeNode>)` |
-| **Interactions Handler** | `Interaction/InteractionsHandler.cs` | MonoBehaviour; `Initialize(IndexHandler, DataHandler)`, `ToggleExpand`, `ToggleVisibility`, `SetSelection/GetSelection`, `RevealNode`, `IsValidDrop`, `ExecuteDrop` |
-| **Rendering Handler** | `UI/RenderingHandler.cs` | MonoBehaviour on UIDocument; `Initialize(InteractionsHandler, IndexHandler)`; owns `ListView` + `TextField`; full UI lifecycle |
+| **Drag/Drop Validator** | `DragDropValidation/DragDropValidator.cs` | Plain class; `IsValidDrop(draggedId, newParentId)`, `IsDescendant(ancestorId, candidateId)`; constructed with `(Func<string,TreeNode>)` only — no roots list |
+| **Interactions Handler** | `Interaction/InteractionsHandler.cs` | MonoBehaviour; `Initialize(IndexHandler, DataHandler)`, `ToggleExpand`, `ToggleVisibility`, `SetSelection/GetSelection`, `ExecuteDrop(draggedId, hoveredId, insertBefore)`, `GetValidator()` |
+| **Rendering Handler** | `UI/RenderingHandler.cs` | MonoBehaviour on UIDocument; `Initialize(InteractionsHandler, IndexHandler, DragDropValidator)`; owns `ListView` + `TextField` + `_validator`; full UI lifecycle |
 | **Bootstrapper** | `TreeBootstrapper.cs` | MonoBehaviour; wires all handlers in `Awake` via explicit `Initialize()` chain; all handlers [SerializeField]-injected |
 | **Data Generator** | `Editor/TreeDataGenerator.cs` | Static class; `Generate(targetCount=2500, maxDepth=6, seed=0)` — editor-only, produces `List<TreeNode>`; saved to `TreeData.asset` via `TreeDataGeneratorEditor` |
 
@@ -59,7 +59,7 @@ TreeBootstrapper.Awake()
   └─ DataHandler.Initialize()                        loads/reconstructs tree from TreeData.asset
   └─ IndexHandler.Initialize(data)                   builds _idMap + flat list, wires OnDataMutated → rebuild
   └─ InteractionsHandler.Initialize(index, data)     creates DragDropValidator, wires interactions
-  └─ RenderingHandler.Initialize(interactions, index) sets up ListView, search, keyboard, drag
+  └─ RenderingHandler.Initialize(interactions, index, interactions.GetValidator()) sets up ListView, search, keyboard, drag
 ```
 
 ## Inter-Handler Communication Model
@@ -103,7 +103,7 @@ Event flow on reveal:
 
 **Virtualization**: `ListView` with `CollectionVirtualizationMethod.FixedHeight`, `fixedItemHeight = 48`. Row structure: `row > spacer, toggle (▼/▶), label, vis-btn`. Always unregister old callbacks before rebinding — ListView reuses VisualElements.
 
-**Drag/drop**: Pointer-event based (`PointerDownEvent` on row captures `_draggedNodeId`; `PointerMoveEvent`/`PointerUpEvent`/`PointerLeaveEvent` on the ListView via `TrickleDown`) — runtime-safe, no `UnityEditor.DragAndDrop`. `IndexAtY` converts pointer Y to flat list index via `FloorToInt(y / fixedItemHeight)`. Validate in move event, commit in up event. Reject: drop onto self, onto descendant, adjacent sibling (no-op reorder). After drop, `RevealNode` scrolls to the moved item. Visual feedback via `.tree-row--drag-target` (2px blue bottom border).
+**Drag/drop**: Pointer-event based (`PointerDownEvent` on row captures `_draggedNodeId`; `PointerMoveEvent`/`PointerUpEvent`/`PointerLeaveEvent` on the ListView via `TrickleDown`) — runtime-safe, no `UnityEditor.DragAndDrop`. `IndexAtY` converts pointer Y to flat list index via `FloorToInt(y / fixedItemHeight)`. Validate in move event, commit in up event. `insertBefore` determined by top/bottom half of hovered row (y < fixedItemHeight * 0.5). Drop onto expanded group's bottom half inserts as first child. Reject: drop onto self, onto descendant, items at root level (only groups allowed at root). After drop, `RevealNode` scrolls to the moved item. Visual feedback via `.tree-row--drop-before` / `.tree-row--drop-after` CSS classes. `DragDropValidator` is constructed in `InteractionsHandler.Initialize` and passed to `RenderingHandler` via `GetValidator()` in `TreeBootstrapper.Awake`.
 
 **Search**: 300ms debounce via `Update()` timer. `FilterNodes` collects matching IDs + all ancestors, then DFS through tree skipping non-included nodes. Non-destructive — does not mutate model.
 
