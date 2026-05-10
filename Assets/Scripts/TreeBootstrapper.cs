@@ -11,7 +11,8 @@ public class TreeBootstrapper : MonoBehaviour
     [SerializeField] private InteractionsHandler _interactions;
     [SerializeField] private RenderingHandler _rendering;
 
-    private void Awake()
+    // Start runs after all Awake/OnEnable cycles complete, guaranteeing UIDocument.rootVisualElement is ready.
+    private void Start()
     {
         _data.Initialize();
         _index.Initialize(_data);

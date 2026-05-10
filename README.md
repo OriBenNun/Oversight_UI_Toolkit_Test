@@ -12,8 +12,10 @@
 
 I'll start by saying that the architecture and prinicples I went by have changed quite significantly since I first
 started working on this assignment, and I felt how I better understand the task at hand and the tradeoffs with every
-iteration (documetned in the dev diary). So here's the final architecture, written with the help of Claude Sonnet 4.6
-medium effort:
+iteration (documetned in the dev diary).
+
+**So here's the final architecture, written with Claude Sonnet 4.6 medium effort:**
+
 
 ##### Most Important Tradeoffs:
 
@@ -410,3 +412,16 @@ THE GROUP IS COLLAPSED
 
 Also was easily fixed by Claude. We just added a new enum to keep track of the drop mode (so we have before, into and
 after), and added a corresponding USS class and Rendering simple logic
+
+#### 2220:
+Finished with the bugfixes, now re-reading the instructions to make sure everything is correct and I have'nt missed anything.
+In the meantime I built the project for the first time, and saw the data doesn't load properly. switching to development build to see what's going on.
+
+Saw we're missing expand/collapse all features, adding those.
+
+Also, while I was starting to write the architecture summary, I noticed more things that can be improved.
+Prompt:
+"
+ok, so we need to move the keyboard navigation handling from the Rendering to the Interactions. it controls the
+selection, it's not a UI logic. Also move the search logic
+"

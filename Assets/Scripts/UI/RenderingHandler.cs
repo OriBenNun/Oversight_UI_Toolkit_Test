@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DragDropValidation;
 using Index;
@@ -20,15 +21,11 @@ namespace UI
         private IndexHandler _indexHandler;
         private DragDropValidator _validator;
 
-        private float _searchDebounceTimer;
-        private const float SearchDebounceSeconds = 0.3f;
-        private string _pendingQuery;
-        private bool _isSearchActive;
-        private bool _searchDirty;
-
         private string _draggedNodeId;
         private int _dragTargetIndex = -1;
         private DropMode _dropMode = Before;
+        private Button _expandAllBtn;
+        private Button _collapseAllBtn;
 
         // Top/bottom tips of a group row trigger Before/After; the middle zone triggers Into.
         private const float GroupTipFraction = 0.2f;
@@ -39,9 +36,12 @@ namespace UI
             _interactions = interactions;
             _indexHandler = index;
             _validator = validator;
+            // Bootstrapper calls Initialize() from Start(), after all Awake/OnEnable cycles complete,
+            // so UIDocument.rootVisualElement is guaranteed ready here.
+            SetupUI();
         }
 
-        private void OnEnable()
+        private void SetupUI()
         {
             var root = _doc.rootVisualElement;
             _listView = root.Q<ListView>("tree-list-view");
@@ -51,6 +51,7 @@ namespace UI
             SetupListView();
             SetupSearch();
             SetupKeyboard();
+            SetupToolbar(root);
             _indexHandler.OnFlatListInvalidated += RebuildFlatList;
             _indexHandler.OnRevealNode += ScrollToNode;
             RebuildFlatList();
@@ -60,17 +61,6 @@ namespace UI
         {
             _indexHandler.OnFlatListInvalidated -= RebuildFlatList;
             _indexHandler.OnRevealNode -= ScrollToNode;
-        }
-
-        private void Update()
-        {
-            if (!_searchDirty) return;
-            _searchDebounceTimer -= Time.deltaTime;
-            if (_searchDebounceTimer <= 0f)
-            {
-                ApplySearch(_pendingQuery);
-                _searchDirty = false;
-            }
         }
 
         // ── ListView ───────────────────────────────────────────────────────────
@@ -140,7 +130,7 @@ namespace UI
             spacer.style.width = depth * 16;
 
             // In filter mode expand/collapse is meaningless — AppendFiltered ignores IsExpanded — so hide the toggle.
-            if (node.IsGroup && !_isSearchActive)
+            if (node.IsGroup && !_interactions.IsSearchActive)
             {
                 toggle.RemoveFromClassList("tree-toggle--hidden");
                 toggle.text = node.IsExpanded ? "▼" : "▶";
@@ -174,8 +164,8 @@ namespace UI
                 element.RemoveFromClassList("tree-row--selected");
 
             element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex && _dropMode == Before);
-            element.EnableInClassList("tree-row--drop-into",   index == _dragTargetIndex && _dropMode == Into);
-            element.EnableInClassList("tree-row--drop-after",  index == _dragTargetIndex && _dropMode == After);
+            element.EnableInClassList("tree-row--drop-into", index == _dragTargetIndex && _dropMode == Into);
+            element.EnableInClassList("tree-row--drop-after", index == _dragTargetIndex && _dropMode == After);
         }
 
         // ── Flat list ──────────────────────────────────────────────────────────
@@ -185,19 +175,6 @@ namespace UI
             _listView.itemsSource = _indexHandler.FlatList;
             _listView.RefreshItems();
             ResolveSelectionIndex();
-        }
-
-        private void ApplySearch(string query)
-        {
-            var wasSearchActive = _isSearchActive;
-            _isSearchActive = !string.IsNullOrWhiteSpace(query);
-            _indexHandler.SetFilter(query);
-
-            if (wasSearchActive && !_isSearchActive)
-            {
-                var sel = _interactions.GetSelection();
-                if (sel != null) _indexHandler.RevealNode(sel);
-            }
         }
 
         // ── Selection ──────────────────────────────────────────────────────────
@@ -219,15 +196,30 @@ namespace UI
                 _listView.SetSelectionWithoutNotify(new[] { idx });
         }
 
+        // ── Toolbar ────────────────────────────────────────────────────────────
+
+        private void SetupToolbar(VisualElement root)
+        {
+            _expandAllBtn = root.Q<Button>("expand-all-btn");
+            _collapseAllBtn = root.Q<Button>("collapse-all-btn");
+            _expandAllBtn.clicked += _interactions.ExpandAll;
+            _collapseAllBtn.clicked += _interactions.CollapseAll;
+        }
+
+        private void SetToolbarEnabled(bool enabled)
+        {
+            _expandAllBtn.SetEnabled(enabled);
+            _collapseAllBtn.SetEnabled(enabled);
+        }
+
         // ── Search ─────────────────────────────────────────────────────────────
 
         private void SetupSearch()
         {
             _searchField.RegisterValueChangedCallback(evt =>
             {
-                _pendingQuery = evt.newValue;
-                _searchDebounceTimer = SearchDebounceSeconds;
-                _searchDirty = true;
+                _interactions.OnSearchQueryChanged(evt.newValue);
+                SetToolbarEnabled(string.IsNullOrWhiteSpace(evt.newValue));
             });
         }
 
@@ -243,34 +235,18 @@ namespace UI
             switch (evt.keyCode)
             {
                 case KeyCode.UpArrow:
-                {
-                    var next = Mathf.Max(0, _listView.selectedIndex - 1);
-                    _listView.selectedIndex = next;
-                    _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
-                    _listView.RefreshItems();
-                    evt.StopPropagation();
-                    break;
-                }
                 case KeyCode.DownArrow:
-                {
-                    var next = Mathf.Min(_indexHandler.FlatList.Count - 1, _listView.selectedIndex + 1);
-                    _listView.selectedIndex = next;
-                    _interactions.SetSelection(_indexHandler.FlatList[next].node.NodeId);
-                    _listView.RefreshItems();
-                    evt.StopPropagation();
-                    break;
-                }
                 case KeyCode.Return:
                 case KeyCode.Space:
-                {
-                    if (!_isSearchActive)
+                    var next = _interactions.HandleKeyDown(evt.keyCode);
+                    if (next >= 0)
                     {
-                        var sel = _interactions.GetSelection();
-                        if (sel != null) _interactions.ToggleExpand(sel);
+                        _listView.selectedIndex = next;
+                        _listView.RefreshItems();
                     }
+
                     evt.StopPropagation();
                     break;
-                }
             }
         }
 
@@ -356,6 +332,7 @@ namespace UI
                 if (yInRow > _listView.fixedItemHeight - tip) return After;
                 return Into;
             }
+
             return yInRow < _listView.fixedItemHeight * 0.5f ? Before : After;
         }
 
@@ -376,7 +353,7 @@ namespace UI
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
-        
+
         // Comment by Claude:
         // RowData stores NodeId on each reused VisualElement via userData. Without it, drag start (line 116) can't know which
         // node a row represents.

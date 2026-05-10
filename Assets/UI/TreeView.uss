@@ -12,6 +12,40 @@
     min-height: 36px;
 }
 
+.tree-toolbar {
+    flex-direction: row;
+    margin: 0 4px 4px 4px;
+}
+
+.tree-toolbar-btn {
+    flex-grow: 1;
+    height: 28px;
+    font-size: 18px;
+    margin: 0 2px;
+    background-color: rgba(80, 80, 80, 0.6);
+    border-color: rgb(80, 80, 80);
+    border-width: 1px;
+    border-radius: 3px;
+    color: rgb(200, 200, 200);
+    -unity-text-align: middle-center;
+}
+
+.tree-toolbar-btn:hover {
+    background-color: rgba(100, 100, 100, 0.8);
+    color: rgb(255, 255, 255);
+}
+
+.tree-toolbar-btn:disabled {
+    opacity: 0.35;
+    background-color: rgba(80, 80, 80, 0.6);
+    color: rgb(200, 200, 200);
+}
+
+.tree-toolbar-btn:disabled:hover {
+    background-color: rgba(80, 80, 80, 0.6);
+    color: rgb(200, 200, 200);
+}
+
 .tree-list-view {
     height: auto;
     flex-grow: 1;

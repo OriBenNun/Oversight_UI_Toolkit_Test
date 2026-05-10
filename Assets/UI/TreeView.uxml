@@ -2,6 +2,10 @@
     <Style src="project://database/Assets/UI/TreeView.uss?fileID=7433441132597879392&amp;guid=500e075eccd5102439a2ee0d7b18301b&amp;type=3#TreeView"/>
     <ui:VisualElement name="tree-root" class="tree-root" style="background-color: rgb(40, 40, 40);">
         <ui:TextField name="search-field" placeholder-text="Search..." class="tree-search" style="height: auto;"/>
+        <ui:VisualElement name="tree-toolbar" class="tree-toolbar">
+            <ui:Button name="expand-all-btn" text="Expand All" class="tree-toolbar-btn"/>
+            <ui:Button name="collapse-all-btn" text="Collapse All" class="tree-toolbar-btn"/>
+        </ui:VisualElement>
         <ui:ListView name="tree-list-view" class="tree-list-view" style="min-height: 414px;"/>
     </ui:VisualElement>
 </ui:UXML>
