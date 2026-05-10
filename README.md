@@ -351,6 +351,18 @@ our drag/drop is missing one or two use-cases, fix it. it should allow:
 Then I found and fixed two more bugs with the validator, one caused by Claude's recent change and one was an edge-case (when trying to move a non-group item to the root of the tree, outside of any groups).
 
 
+#### 2130:
+Started going through the RenderingHandler.
+Seems good, just added comments.
+
+#### 2150:
+Finished reading the codebase and I feel comfortable with the code and the architecture.
+Moving on to bug fixes.
+I'll start with the filtered list with acts very weird upon interacting with the items when filtered.
+
+
+
+
 ## Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine
    for 2500 nodes, but not for 250k nodes.

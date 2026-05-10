@@ -39,7 +39,7 @@ namespace UI
         private void OnEnable()
         {
             var root = _doc.rootVisualElement;
-            _listView    = root.Q<ListView>("tree-list-view");
+            _listView = root.Q<ListView>("tree-list-view");
             _searchField = root.Q<TextField>("search-field");
 
             SetupListView();
@@ -111,7 +111,7 @@ namespace UI
 
             row.RegisterCallback<PointerDownEvent>(evt =>
             {
-                if (evt.button != 0) return;
+                if (evt.button != 0) return; // Only left mouse button
                 if (row.userData is RowData data)
                     _draggedNodeId = data.NodeId;
             });
@@ -126,7 +126,7 @@ namespace UI
 
             var spacer = element.Q("indent");
             var toggle = element.Q<Button>("toggle");
-            var label  = element.Q<Label>("label");
+            var label = element.Q<Label>("label");
             var visBtn = element.Q<Button>("vis-btn");
 
             element.userData = new RowData { NodeId = node.NodeId };
@@ -150,12 +150,12 @@ namespace UI
 
             label.text = node.DisplayName;
             if (node.IsGroup) label.AddToClassList("tree-label--group");
-            else              label.RemoveFromClassList("tree-label--group");
+            else label.RemoveFromClassList("tree-label--group");
 
             visBtn.text = visState == VisibilityState.Visible ? "●" : visState == VisibilityState.Mixed ? "◑" : "○";
             visBtn.EnableInClassList("tree-visibility-btn--visible", visState == VisibilityState.Visible);
-            visBtn.EnableInClassList("tree-visibility-btn--mixed",   visState == VisibilityState.Mixed);
-            visBtn.EnableInClassList("tree-visibility-btn--hidden",  visState == VisibilityState.Hidden);
+            visBtn.EnableInClassList("tree-visibility-btn--mixed", visState == VisibilityState.Mixed);
+            visBtn.EnableInClassList("tree-visibility-btn--hidden", visState == VisibilityState.Hidden);
             if (visBtn.userData is System.Action oldVisCb) visBtn.clicked -= oldVisCb;
             System.Action newVisCb = () => _interactions.ToggleVisibility(node.NodeId);
             visBtn.userData = newVisCb;
@@ -166,8 +166,8 @@ namespace UI
             else
                 element.RemoveFromClassList("tree-row--selected");
 
-            element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex &&  _insertBefore);
-            element.EnableInClassList("tree-row--drop-after",  index == _dragTargetIndex && !_insertBefore);
+            element.EnableInClassList("tree-row--drop-before", index == _dragTargetIndex && _insertBefore);
+            element.EnableInClassList("tree-row--drop-after", index == _dragTargetIndex && !_insertBefore);
         }
 
         // ── Flat list ──────────────────────────────────────────────────────────
@@ -270,13 +270,23 @@ namespace UI
             if (evt.pressedButtons != 1 || string.IsNullOrEmpty(_draggedNodeId)) return;
 
             var hoveredIndex = IndexAtY(evt.localPosition.y);
-            if (hoveredIndex < 0) { ClearDropTarget(); _listView.RefreshItems(); return; }
+            if (hoveredIndex < 0)
+            {
+                ClearDropTarget();
+                _listView.RefreshItems();
+                return;
+            }
 
             var hoveredNode = _indexHandler.FlatList[hoveredIndex].node;
-            if (hoveredNode.NodeId == _draggedNodeId) { ClearDropTarget(); _listView.RefreshItems(); return; }
+            if (hoveredNode.NodeId == _draggedNodeId)
+            {
+                ClearDropTarget();
+                _listView.RefreshItems();
+                return;
+            }
 
-            var yInRow    = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
-            var before     = yInRow < _listView.fixedItemHeight * 0.5f;
+            var yInRow = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
+            var before = yInRow < _listView.fixedItemHeight * 0.5f;
             var parentId = (!before && hoveredNode.IsGroup && hoveredNode.IsExpanded)
                 ? hoveredNode.NodeId
                 : hoveredNode.ParentId;
@@ -284,7 +294,7 @@ namespace UI
             if (_validator.IsValidDrop(_draggedNodeId, parentId))
             {
                 _dragTargetIndex = hoveredIndex;
-                _insertBefore    = before;
+                _insertBefore = before;
             }
             else
                 ClearDropTarget();
@@ -299,8 +309,8 @@ namespace UI
                 var hoveredIndex = IndexAtY(evt.localPosition.y);
                 if (hoveredIndex >= 0)
                 {
-                    var hoveredNode  = _indexHandler.FlatList[hoveredIndex].node;
-                    var yInRow     = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
+                    var hoveredNode = _indexHandler.FlatList[hoveredIndex].node;
+                    var yInRow = evt.localPosition.y - hoveredIndex * _listView.fixedItemHeight;
                     var insertBefore = yInRow < _listView.fixedItemHeight * 0.5f;
 
                     if (_interactions.ExecuteDrop(_draggedNodeId, hoveredNode.NodeId, insertBefore))
@@ -323,7 +333,7 @@ namespace UI
         private void ClearDropTarget()
         {
             _dragTargetIndex = -1;
-            _insertBefore    = true;
+            _insertBefore = true;
         }
 
         private void ScrollToNode(string id)
@@ -341,7 +351,13 @@ namespace UI
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
-
+        
+        // Comment by Claude:
+        // RowData stores NodeId on each reused VisualElement via userData. Without it, drag start (line 116) can't know which
+        // node a row represents.
+        // userData is typed object, so a named class is cleaner than boxing a raw string — but you could replace it with just
+        // element.userData = node.NodeId and cast (string)row.userData on read. The class adds nothing functionally here; it's
+        // just a named wrapper.
         private class RowData
         {
             public string NodeId;
