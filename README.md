@@ -16,7 +16,8 @@ To control the UI, you can:
 3. Use the search bar to filter nodes by name (case-insensitive, partial match, finds both groups and layers)
 4. Use the expand/collapse arrow on the left of the group's name to expand/collapse the group
 5. Use the visibility toggle on the rightside of the node's layer to "hide"/"show" the layer (mutates the underlying
-   data, but the toggle is the only visual indicator of the visibility state)
+   data, but the toggle is the only visual indicator of the visibility state with a **tri-state** checkbox
+   visualization)
 
 ##### Unity version used: 6000.4.5f1
 
@@ -70,9 +71,59 @@ Each handler knows only the layers **below** it. No upward references.
    passed during initialization. It's a tradeoff because we will add a small overhead of a method call and a bit less
    optimized CPU-RAM usage, however this way we ensure true single source of truth (SSOT). Data and updates always flow
    down and requests flow up.
-6. The IndexHandler keeps track of and updates the shown nodes with List<(TreeNode, depth, VisibilityState)>. This way,
-   we can be using the UI Toolkit's ListView component for virtualization and flat list rendering, and we know how to
-   render their tree structure (which is transparent to the ListView component) using the list.
+
+##### How virtualization/indexing works
+
+Virtualization is handled by the ListView component itself — it only renders visible rows and reuses off-screen
+elements. Our flat list is the data source it pulls from (keeping the tree structure transparent to the ListView).
+
+The flat list is rebuilt on every expand/collapse, visibility toggle, filter change, or drag-drop. Without a filter,
+it's a single DFS pass that skips children of collapsed nodes. With a filter, it uses a two-pass approach: pass 1
+collects all name-matching nodes + their ancestors into an unordered set; pass 2 does a DFS and outputs only nodes
+in that set, preserving correct tree order.
+
+For indexing, a dictionary is built once at startup via a recursive DFS over the root nodes. This gives O(1) node
+lookup by id. The dictionary is never rebuilt on data mutation — a reorder or move only affects the flat list, not
+the id map.
+
+##### How search/filtering works
+
+Search input is debounced, meaning only 300ms after the last keystroke the query is applied. This avoids rebuilding the
+flat
+list on every keypress, which would be expensive even at 2K nodes.
+
+Filtering is non-destructive, it never touches the tree structure or the id map. Only the flat list is rebuilt which
+triggers the renderer rebuild cycle.
+
+When the search clears, the previously selected node is revealed and scrolled into view (implementing the RevealNode
+method), so the user doesn't lose their place and the node is still selected.
+
+##### How drag/drop updates the model and rejects invalid moves
+
+Drag/drop is achieved with UI Toolkit pointer-events callbacks based. We listen to pointer down event on each node (
+using userData with
+pointerId inside a wrapper class), and then pointer move and pointer up events on the ListView element.
+
+On pointer down, the dragged node is captured. On pointer move, the hovered row and drop position are computed from the
+pointer's Y coordinate and the scroll offset.
+
+Drop position has three modes: "before", "after", or "into" a group. For group rows, the top and bottom 20% of the row
+trigger before/after; the middle zone triggers into. For item rows, it's a straight top/bottom split from the middle of
+the row.
+
+Validation runs on every move event — if the drop would be invalid, the visual indicator is cleared immediately.
+Rejected cases: dropping onto self, dropping into own subtree, dropping an item at root level (only groups can live at
+root), dropping into a non-group node. It's basically just a single boolean method with a few helpers.
+
+On pointer up, the drop is committed: the node is removed from its old parent, inserted at the computed position in
+the new parent. The tree structure mutation itself always happens on the model layer after a request by the interaction
+layer (after approval of the validation layer), and the data mutation event propagates through the index and rendering
+layers.
+
+Finally, the moved node is then revealed and scrolled into view (not an actual need, because this is basically
+achieved by design because the target is in view, but I wanted to use the RevealNode method at least twice).
+
+##### How drag/drop updates the model and rejects invalid moves
 
 ## Dev Diary:
 
