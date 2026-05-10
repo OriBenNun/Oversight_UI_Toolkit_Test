@@ -1,6 +1,6 @@
 # UI Toolkit Assignment Submission for Oversight by Ori Ben Nun
 
-##### How to open and run this project:
+### How to open and run this project:
 
 1. clone this repository
 2. open the project through the Unity Hub with the correct Unity Editor version (6000.4.5f1)
@@ -27,9 +27,9 @@ To control the UI, you can:
    data, but the toggle is the only visual indicator of the visibility state with a **tri-state** checkbox
    visualization)
 
-##### Unity version used: 6000.4.5f1
+### Unity version used: 6000.4.5f1
 
-##### Architecture Overview:
+### Architecture Overview:
 
 I'll start by saying that the architecture and prinicples I went by have changed quite significantly since I first
 started working on this assignment, and I felt how I better understand the task at hand and the tradeoffs with every
@@ -49,7 +49,7 @@ Layers (top → bottom)
 
 Each handler knows only the layers **below** it. No upward references.
 
-##### Main technical decisions and tradeoffs:
+### Main technical decisions and tradeoffs:
 
 1. My first, and most important decision, was to start with an end-to-end implementation by Claude Code (with my
    instructions and high-level architecture), and iterate over it while I'm getting into the trenches and imrove my
@@ -83,7 +83,7 @@ Each handler knows only the layers **below** it. No upward references.
    old one. Basically this triggers GC on every interaction with the list. Not noticable with 2K nodes, and fixable by
    clearing and refilling the same list in-place, but not done here for simplicity sake.
 
-##### How virtualization/indexing works
+### How virtualization/indexing works
 
 Virtualization is handled by the ListView component itself — it only renders visible rows and reuses off-screen
 elements. Our flat list is the data source it pulls from (keeping the tree structure transparent to the ListView).
@@ -97,7 +97,7 @@ For indexing, a dictionary is built once at startup via a recursive DFS over the
 lookup by id. The dictionary is never rebuilt on data mutation — a reorder or move only affects the flat list, not
 the id map.
 
-##### How search/filtering works
+### How search/filtering works
 
 Search input is debounced, meaning only 300ms after the last keystroke the query is applied. This avoids rebuilding the
 flat
@@ -109,7 +109,7 @@ triggers the renderer rebuild cycle.
 When the search clears, the previously selected node is revealed and scrolled into view (implementing the RevealNode
 method), so the user doesn't lose their place and the node is still selected.
 
-##### How drag/drop updates the model and rejects invalid moves
+### How drag/drop updates the model and rejects invalid moves
 
 Drag/drop is achieved with UI Toolkit pointer-events callbacks based. We listen to pointer down event on each node (
 using userData with
@@ -134,7 +134,7 @@ layers.
 Finally, the moved node is then revealed and scrolled into view (not an actual need, because this is basically
 achieved by design because the target is in view, but I wanted to use the RevealNode method at least twice).
 
-##### Known limitations
+### Known limitations
 
 1. As mentioned above, my data structures selection is very suitable for 2500 nodes, and will probably work great with
    up to 10K or even 50K nodes. But after that, the performance will probably start to drop and a different solution
@@ -147,7 +147,7 @@ achieved by design because the target is in view, but I wanted to use the Reveal
 3. I couldn't think of more limitations worth mentioning, and would love to hear from you if you find or can think of
    any!
 
-##### Approximate time spent
+### Approximate time spent
 
 I believe my net work time is **about 10-11 hours.**
 I know that it's about 30% above the suggested time, but I believe the main reason was that, unfortunately, I wasn't
@@ -156,7 +156,7 @@ time in a row. This is not an excuse, but I hope it will explain a bit why the t
 However, I do believe the extra time wasn't taken to overbuild the assignment, but rather to ensure that I met the
 requirements of the assignment (while keeping it up to my standards).
 
-##### AI usage disclosure:
+### AI usage disclosure:
 
 I've used Claude Code Sonnet 4.6 (medium effort) to help me with almost every step of the process (except for this
 README file, and even here it helped a couple of times haha).
