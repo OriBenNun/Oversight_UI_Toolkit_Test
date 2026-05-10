@@ -16,6 +16,17 @@ iteration (documetned in the dev diary).
 
 **So here's the final architecture, written with Claude Sonnet 4.6 medium effort:**
 
+4 runtime handlers + 1 pure validator, explicit dependency chain, no mediator.
+
+Layers (top → bottom)
+
+1. RenderingHandler ← UI only. ListView lifecycle, drag/drop pointer events, visual feedback
+2. DragDropValidator ← Pure C# constraint layer. Drop legality, descendant checks
+3. InteractionsHandler ← Intent only. Selection, expand/collapse, search, keyboard nav, drop execution
+4. IndexHandler ← Derived state. Flat list, id map, filter, reveal
+5. DataHandler ← Source of truth. Tree structure, mutation, persistence
+
+Each handler knows only the layers below it. No upward references.
 
 ##### Most Important Tradeoffs:
 
@@ -425,3 +436,6 @@ Prompt:
 ok, so we need to move the keyboard navigation handling from the Rendering to the Interactions. it controls the
 selection, it's not a UI logic. Also move the search logic
 "
+
+#### 2315:
+pushed final touches and fixes, rebuilding to ensure the build-only bug was fixed (tried to fetch the UiDocument on Awake instead of waiting after OnEnable).
