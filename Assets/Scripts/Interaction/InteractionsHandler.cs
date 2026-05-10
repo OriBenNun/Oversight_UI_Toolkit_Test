@@ -16,7 +16,7 @@ namespace Interaction
         {
             _indexHandler = index;
             _dataHandler = data;
-            _validator = new DragDropValidator(_indexHandler.GetNodeById, _dataHandler.Roots);
+            _validator = new DragDropValidator(_indexHandler.GetNodeById, () => _dataHandler.Roots);
         }
 
         public void ToggleExpand(string nodeId)
@@ -45,9 +45,7 @@ namespace Interaction
 
         public void SetSelection(string nodeId) => _selectedNodeId = nodeId;
         public string GetSelection() => _selectedNodeId;
-
-        public void RevealNode(string id) => _indexHandler.RevealNode(id);
-
+        
         public bool IsValidDrop(string draggedId, string targetId)
             => _validator.IsValidDrop(draggedId, targetId);
 
@@ -56,7 +54,6 @@ namespace Interaction
             if (!IsValidDrop(draggedId, targetId)) return;
             var dragged = _indexHandler.GetNodeById(draggedId);
             var newParent = _indexHandler.GetNodeById(targetId);
-            if (dragged == null || newParent == null) return;
             var oldParent = _indexHandler.GetNodeById(dragged.ParentId);
             _dataHandler.MoveNode(dragged, oldParent, newParent, insertIndex);
         }

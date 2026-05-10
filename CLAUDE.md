@@ -21,14 +21,14 @@ Run tests: Unity Editor → Window → General → Test Runner → Run All.
 
 ```
 Assets/Scripts/
-├── Model/          TreeNode.cs, NodeType.cs, LayerType.cs   (namespace Model)
-├── Index/          TreeIndex.cs                              (namespace Index)
-├── Logic/          DragDropValidator.cs                      (namespace Logic)
-├── Runtime/        TreeBootstrapper.cs, DataHandler.cs,
-│                   IndexHandler.cs, InteractionsHandler.cs,
-│                   RenderingHandler.cs                       (namespace Runtime)
-├── Data/           NodeData.cs, TreeDataAsset.cs             (namespace Data)
-└── Editor/         TreeDataGenerator.cs, TreeDataGeneratorEditor.cs  (namespace Editor)
+├── Model/              TreeNode.cs, NodeType.cs, LayerType.cs, DataHandler.cs  (namespace Model)
+├── Index/              IndexHandler.cs                                          (namespace Index)
+├── Interaction/        InteractionsHandler.cs                                   (namespace Interaction)
+├── UI/                 RenderingHandler.cs                                      (namespace UI)
+├── DragDropValidation/ DragDropValidator.cs                                     (namespace DragDropValidation)
+├── Data/               NodeData.cs, TreeDataAsset.cs                            (namespace Data)
+├── Editor/             TreeDataGenerator.cs, TreeDataGeneratorEditor.cs         (namespace Editor)
+└── TreeBootstrapper.cs                                                          (no namespace)
 
 Assets/UI/
 ├── TreeView.uxml
@@ -42,29 +42,58 @@ Assets/Resources/
 
 | Layer | File | Key API |
 |---|---|---|
-| **Data Model** | `Model/TreeNode.cs` | `NodeId`, `ParentId`, `Children` (List<TreeNode>), `IsExpanded`, `IsVisible`, `NodeType`, `LayerType`, `SetExpanded/SetVisible/SetParent/AddChild/RemoveChild`, `ComputeVisibilityState()` |
+| **Data Model** | `Model/TreeNode.cs` | `NodeId`, `ParentId`, `Children` (List<TreeNode>), `IsExpanded`, `IsVisible`, `IsGroup`, `NodeType`, `LayerType`, `SetExpanded/SetVisible/SetParent/AddChild/RemoveChild`, `ComputeVisibilityState()` |
 | **Enums** | `Model/NodeType.cs`, `Model/LayerType.cs` | `NodeType { Item, Group }`, `LayerType { None, Map, Model3D, Camera, Sensor }`, `VisibilityState { Visible, Hidden, Mixed }` (in TreeNode.cs) |
-| **Tree Index** | `Index/TreeIndex.cs` | `Build(roots)`, `GetNodeById(id)`, `RevealNode(id)`, `BuildFlatList()`, `FilterNodes(query)` |
-| **Drag/Drop Validator** | `Logic/DragDropValidator.cs` | `IsValidDrop(draggedId, targetId)`, `IsDescendant(ancestorId, candidateId)` |
-| **Data Handler** | `Runtime/DataHandler.cs` | Loads `TreeDataAsset`, reconstructs tree from flat `NodeData[]`, exposes `Roots`/`MutableRoots`, `MoveNode(dragged, oldParent, newParent, insertIndex)`, `OnDataMutated` event |
-| **Index Handler** | `Runtime/IndexHandler.cs` | Wraps `TreeIndex`; `Initialize(DataHandler)`, `BuildFlatList()` → `List<(TreeNode, int, VisibilityState)>`, `FilterNodes(query)`, `RevealNode(id)`, `OnFlatListInvalidated` event |
-| **Interactions Handler** | `Runtime/InteractionsHandler.cs` | `ToggleExpand`, `ToggleVisibility`, `SetSelection/GetSelection`, `IsValidDrop`, `ExecuteDrop`, `OnFlatListInvalidated` event |
-| **Rendering Handler** | `Runtime/RenderingHandler.cs` | MonoBehaviour on UIDocument; owns `ListView` + `TextField`; full UI lifecycle |
-| **Bootstrapper** | `Runtime/TreeBootstrapper.cs` | Wires all handlers in Awake via explicit `Initialize()` chain |
-| **Data Generator** | `Editor/TreeDataGenerator.cs` | `Generate(targetCount=2500, maxDepth=6)` — editor-only, produces `List<TreeNode>`; saves to `TreeData.asset` via `TreeDataGeneratorEditor` |
+| **Data Handler** | `Model/DataHandler.cs` | MonoBehaviour; loads `TreeDataAsset`, reconstructs tree from flat `NodeData[]`, exposes `Roots` (List<TreeNode>), `MoveNode(dragged, oldParent, newParent, insertIndex)`, `OnDataMutated` event |
+| **Index Handler** | `Index/IndexHandler.cs` | MonoBehaviour; owns `_idMap` dictionary + flat list; `Initialize(DataHandler)`, `GetNodeById(id)`, `RevealNode(id)`, `SetFilter(query)`, `NotifyRebuildNeeded()`, `FlatList` property, `OnFlatListInvalidated` event, `OnRevealNode` event |
+| **Drag/Drop Validator** | `DragDropValidation/DragDropValidator.cs` | Plain class; `IsValidDrop(draggedId, targetId)`, `IsDescendant(ancestorId, candidateId)`; constructed with `(Func<string,TreeNode>, IReadOnlyList<TreeNode>)` |
+| **Interactions Handler** | `Interaction/InteractionsHandler.cs` | MonoBehaviour; `Initialize(IndexHandler, DataHandler)`, `ToggleExpand`, `ToggleVisibility`, `SetSelection/GetSelection`, `RevealNode`, `IsValidDrop`, `ExecuteDrop` |
+| **Rendering Handler** | `UI/RenderingHandler.cs` | MonoBehaviour on UIDocument; `Initialize(InteractionsHandler, IndexHandler)`; owns `ListView` + `TextField`; full UI lifecycle |
+| **Bootstrapper** | `TreeBootstrapper.cs` | MonoBehaviour; wires all handlers in `Awake` via explicit `Initialize()` chain; all handlers [SerializeField]-injected |
+| **Data Generator** | `Editor/TreeDataGenerator.cs` | Static class; `Generate(targetCount=2500, maxDepth=6, seed=0)` — editor-only, produces `List<TreeNode>`; saved to `TreeData.asset` via `TreeDataGeneratorEditor` |
 
 ## Runtime Handler Chain
 
 ```
 TreeBootstrapper.Awake()
-  └─ DataHandler.Initialize()          loads/reconstructs tree from TreeData.asset
-  └─ IndexHandler.Initialize(data)     builds TreeIndex, wires OnDataMutated → rebuild
-  └─ InteractionsHandler.Initialize(index, data)  creates DragDropValidator, wires events
-  └─ RenderingHandler.Initialize(interactions)    sets up ListView, search, keyboard, drag
+  └─ DataHandler.Initialize()                        loads/reconstructs tree from TreeData.asset
+  └─ IndexHandler.Initialize(data)                   builds _idMap + flat list, wires OnDataMutated → rebuild
+  └─ InteractionsHandler.Initialize(index, data)     creates DragDropValidator, wires interactions
+  └─ RenderingHandler.Initialize(interactions, index) sets up ListView, search, keyboard, drag
 ```
 
-Event flow on expand/collapse/filter/move:
-`InteractionsHandler` → `IndexHandler.RebuildAndNotify()` → `OnFlatListInvalidated` → `RenderingHandler` refreshes ListView.
+## Inter-Handler Communication Model
+
+**Direct dependency, no mediator.** Each handler holds a reference only to the handlers it actually needs and subscribes directly to their events. There is no pass-through layer.
+
+```
+DataHandler          owns tree data, fires OnDataMutated
+IndexHandler         owns _idMap + FlatList, fires OnFlatListInvalidated / OnRevealNode
+InteractionsHandler  owns selection + DragDropValidator
+RenderingHandler     owns ListView + search + keyboard + drag UI
+```
+
+`RenderingHandler` depends on **both** `IndexHandler` (for `FlatList`, `OnFlatListInvalidated`, `OnRevealNode`) and `InteractionsHandler` (for user-action commands). It subscribes directly to `IndexHandler` events — `InteractionsHandler` does not re-expose or forward them.
+
+`InteractionsHandler` depends on **both** `IndexHandler` (lookup + `NotifyRebuildNeeded`) and `DataHandler` (mutation via `MoveNode`).
+
+`IndexHandler` depends on **only** `DataHandler` (subscribes to `OnDataMutated`).
+
+Event flow on expand/collapse/visibility/move:
+1. `RenderingHandler` calls `InteractionsHandler.ToggleExpand/ToggleVisibility/ExecuteDrop`
+2. `InteractionsHandler` mutates model state, then calls `IndexHandler.NotifyRebuildNeeded()`
+3. `IndexHandler` rebuilds `FlatList`, fires `OnFlatListInvalidated`
+4. `RenderingHandler` receives `OnFlatListInvalidated` directly → refreshes `ListView`
+
+Event flow on data mutation (drag/drop move):
+1. `InteractionsHandler.ExecuteDrop` → `DataHandler.MoveNode` → fires `OnDataMutated`
+2. `IndexHandler` receives `OnDataMutated` → calls `NotifyRebuildNeeded()` → fires `OnFlatListInvalidated`
+3. `RenderingHandler` receives `OnFlatListInvalidated` directly → refreshes `ListView`
+
+Event flow on reveal:
+1. `RenderingHandler` calls `InteractionsHandler.RevealNode(id)` → delegates to `IndexHandler.RevealNode`
+2. `IndexHandler` expands ancestors, calls `NotifyRebuildNeeded()`, fires `OnRevealNode(id)`
+3. `RenderingHandler` receives `OnRevealNode` directly → `ScrollToNode`
 
 ## Key Technical Decisions
 
@@ -74,7 +103,7 @@ Event flow on expand/collapse/filter/move:
 
 **Virtualization**: `ListView` with `CollectionVirtualizationMethod.FixedHeight`, `fixedItemHeight = 48`. Row structure: `row > spacer, toggle (▼/▶), label, vis-btn`. Always unregister old callbacks before rebinding — ListView reuses VisualElements.
 
-**Drag/drop**: Pointer-event based (`PointerDownEvent`, `PointerMoveEvent`, `PointerUpEvent`, `PointerLeaveEvent`) — runtime-safe, no `UnityEditor.DragAndDrop`. `IndexAtY` converts pointer Y to flat list index via `FloorToInt(y / fixedItemHeight)`. Validate in move event, commit in up event. Reject: drop onto self, onto descendant, adjacent sibling (no-op reorder). Visual feedback via `.tree-row--drag-target` (2px blue bottom border).
+**Drag/drop**: Pointer-event based (`PointerDownEvent` on row captures `_draggedNodeId`; `PointerMoveEvent`/`PointerUpEvent`/`PointerLeaveEvent` on the ListView via `TrickleDown`) — runtime-safe, no `UnityEditor.DragAndDrop`. `IndexAtY` converts pointer Y to flat list index via `FloorToInt(y / fixedItemHeight)`. Validate in move event, commit in up event. Reject: drop onto self, onto descendant, adjacent sibling (no-op reorder). After drop, `RevealNode` scrolls to the moved item. Visual feedback via `.tree-row--drag-target` (2px blue bottom border).
 
 **Search**: 300ms debounce via `Update()` timer. `FilterNodes` collects matching IDs + all ancestors, then DFS through tree skipping non-included nodes. Non-destructive — does not mutate model.
 
@@ -86,7 +115,7 @@ Event flow on expand/collapse/filter/move:
 
 **TreeNode construction**: Public constructor `TreeNode(id, displayName, type, parentId, layerType)`. GUIDs generated once at editor time by `TreeDataGenerator` via `Guid.NewGuid()`, baked into `TreeData.asset` as `NodeData[]`. At runtime, `DataHandler.ReconstructTree()` rebuilds parent-child links from the flat array — runtime never calls `Guid.NewGuid()`.
 
-**Data mutation**: `DataHandler.MoveNode(dragged, oldParent, newParent, insertIndex)` removes node from old parent, updates `ParentId`, inserts at new position, fires `OnDataMutated`. Index rebuilds in response.
+**Data mutation**: `DataHandler.MoveNode(dragged, oldParent, newParent, insertIndex)` removes node from old parent (or `_roots` if root-level), updates `ParentId`, inserts at clamped position in new parent (or `_roots`), fires `OnDataMutated`. `IndexHandler` rebuilds `_idMap` + flat list in response via `NotifyRebuildNeeded`.
 
 ## Packages
 
@@ -96,4 +125,4 @@ Event flow on expand/collapse/filter/move:
 
 ## Coding Conventions
 
-C# only. Place runtime code under `Assets/Scripts/`, editor-only code under `Assets/Scripts/Editor/`. USS stylesheets alongside their UXML files. No third-party packages. Namespaces match folder names (`Model`, `Index`, `Logic`, `Runtime`, `Data`, `Editor`).
+C# only. Place runtime code under `Assets/Scripts/`, editor-only code under `Assets/Scripts/Editor/`. USS stylesheets alongside their UXML files. No third-party packages. Namespaces match folder names (`Model`, `Index`, `Interaction`, `UI`, `DragDropValidation`, `Data`, `Editor`). `TreeBootstrapper` sits at root `Assets/Scripts/` with no namespace. All handler MonoBehaviours are [SerializeField]-injected into `TreeBootstrapper` — no `[DefaultExecutionOrder]` attributes; use explicit `Initialize()` call order in `Awake` instead.

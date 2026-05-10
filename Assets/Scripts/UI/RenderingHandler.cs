@@ -189,7 +189,7 @@ namespace UI
             if (wasSearchActive && !_isSearchActive)
             {
                 var sel = _interactions.GetSelection();
-                if (sel != null) _interactions.RevealNode(sel);
+                if (sel != null) _indexHandler.RevealNode(sel);
             }
         }
 
@@ -290,7 +290,7 @@ namespace UI
                     {
                         string revealId = _draggedNodeId;
                         _interactions.ExecuteDrop(_draggedNodeId, targetId, 0);
-                        _interactions.RevealNode(revealId);
+                        _indexHandler.RevealNode(revealId);
                     }
                 }
             }

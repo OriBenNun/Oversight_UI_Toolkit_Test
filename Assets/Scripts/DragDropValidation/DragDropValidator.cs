@@ -7,12 +7,12 @@ namespace DragDropValidation
     public class DragDropValidator
     {
         private readonly Func<string, TreeNode> _getNode;
-        private readonly IReadOnlyList<TreeNode> _roots;
+        private readonly Func<List<TreeNode>> _getRoots;
 
-        public DragDropValidator(Func<string, TreeNode> getNode, IReadOnlyList<TreeNode> roots)
+        public DragDropValidator(Func<string, TreeNode> getNode, Func<List<TreeNode>> getRoots)
         {
-            _getNode = getNode;
-            _roots   = roots;
+            _getNode   = getNode;
+            _getRoots  = getRoots;
         }
 
         public bool IsValidDrop(string draggedId, string targetId)
@@ -51,9 +51,9 @@ namespace DragDropValidation
 
         private IReadOnlyList<TreeNode> GetSiblingList(string parentId)
         {
-            if (parentId == null) return _roots;
+            if (parentId == null) return _getRoots();
             var parent = _getNode(parentId);
-            return parent?.Children ?? _roots;
+            return parent?.Children ?? _getRoots();
         }
 
         private static int IndexIn(IReadOnlyList<TreeNode> list, TreeNode node)

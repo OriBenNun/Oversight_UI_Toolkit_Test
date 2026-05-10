@@ -1,7 +1,14 @@
 # UI Toolkit Assignment Submission for Oversight by Ori Ben Nun
 
-I will manage this readme file as a dev diary while working on this assignment, and then I will add more details and
-information after I finish, before submitting.
+##### How to open and run this project:
+1. clone this repository
+2. open the project through the Unity Hub with the correct Unity Editor version (6000.4.5f1)
+3. run the project
+
+##### Unity version used: 6000.4.5f1
+
+##### Architecture Overview:
+
 
 ## Dev Diary:
 
@@ -303,8 +310,7 @@ The search/filter is implemented in a two-pass approach:
 The flat list is a List<(TreeNode node, int depth, VisibilityState visState)>. The reason we need it is that
 the ListView UXML component is a flat list widget. It has no concept of tree hierarchy, expand/collapse, depth, or
 filtering (however it is responsible for the virtualization which is a huge benefit). Our custom
-flat list is the tree view implementation:
-
+flat list is the actual tree view implementation:
 - Collapsed group node → its children are simply absent from the list
 - Depth field → drives indent spacer width
 - Filter → rebuilds the flat list only (doesn't affect the index dictionary or the tree structure) with only matching
@@ -316,8 +322,14 @@ flat list is the tree view implementation:
 small bugfix (changed string.IsNullOrEmpty to id == null). index is not the place to enforce empty ids (should accept them)
 
 Finished with IndexHandler, moving on to the logic layer.
+Starting with a prompt for Claude:
+"
+moving on to the interaction logic layer. We'll begin like we did with the other layers: first make sure the
+seperation between interaction and drag/drop validation is following our current design architecture of SOC and
+SSOT. then, make sure there aren't any redundant fields, old logic that is overkill or isn't needed anymore, etc.
+"
 
-
+Me and Claude found only minor stuff to fix in regards to SOC here. most relevant is to pass a func instead of reference to the roots list to the DragDropValidator. That's to make the live-access intent explicit and remove the fragility.
 
 
 
@@ -334,7 +346,7 @@ Finished with IndexHandler, moving on to the logic layer.
 3. Using MonoBehaviours instead of pure C# classes for better readability and simplicity. Using pure C# classes could
    squeeze more performance, but under the tight time constraints, the complexity of the code is more important than the
    tiny bit of performance.
-4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster in terms of
+4. Using event-based data flow instead of direct calls and reference holding. Reference holding is faster and cheaper in terms of
    performance, but it creates double dependencies and confuses responsibilities, which according to the instructions is
    a more important focus of this assignment.
 5. Anyone who needs data during runtime asks the DataHandler for it instead of holding a reference to it which was
