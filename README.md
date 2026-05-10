@@ -194,6 +194,12 @@ Responded again, but I forgot to copy it and unfortunately I lost the message. I
 Accepting the proposed plan, which basically keeps the old architecture structure of 5 layers, but changes the data flow to be event-based and hirerchical instead of direct calls and double dependencies/references.
 Also removing the tests, which were a nice feature Claude added, but it wasn't asked in the instructions, and it's holding me back from moving faster.
 
+#### 1715:
+
+Starting to go over all the generated code from top to bottom again. Starting with the model scripts.
+
+Model class (TreeNode) looks good. Simplified it a bit (changed to public ctr and other minor stuff)
+
 
 Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.

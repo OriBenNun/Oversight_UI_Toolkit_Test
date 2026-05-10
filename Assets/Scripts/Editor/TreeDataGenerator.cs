@@ -62,7 +62,7 @@ namespace Editor
             for (int i = 0; i < groupsAtRoot && created < targetCount; i++)
             {
                 string name = GroupNames[0][i % GroupNames[0].Length];
-                var group = TreeNode.PopulateNewNode(Guid.NewGuid().ToString(), name, NodeType.Group, null, LayerType.None);
+                var group = new TreeNode(Guid.NewGuid().ToString(), name, NodeType.Group, null, LayerType.None);
                 roots.Add(group);
                 created++;
                 FillGroup(group, 1, maxDepth, targetCount, ref created, rng, itemCounters, groupCounters);
@@ -86,7 +86,7 @@ namespace Editor
                 {
                     groupCounters[depth]++;
                     string name = $"{groupBank[groupCounters[depth] % groupBank.Length]} {groupCounters[depth]}";
-                    var group = TreeNode.PopulateNewNode(Guid.NewGuid().ToString(), name, NodeType.Group, parent.NodeId, LayerType.None);
+                    var group = new TreeNode(Guid.NewGuid().ToString(), name, NodeType.Group, parent.NodeId, LayerType.None);
                     parent.AddChild(group, parent.Children.Count);
                     created++;
                     FillGroup(group, depth + 1, maxDepth, targetCount, ref created, rng, itemCounters, groupCounters);
@@ -96,7 +96,7 @@ namespace Editor
                     var layerType = PickLayerType(depth, maxDepth, rng);
                     itemCounters[(int)layerType]++;
                     string name = BuildItemName(layerType, itemCounters[(int)layerType], rng);
-                    var item = TreeNode.PopulateNewNode(Guid.NewGuid().ToString(), name, NodeType.Item, parent.NodeId, layerType);
+                    var item = new TreeNode(Guid.NewGuid().ToString(), name, NodeType.Item, parent.NodeId, layerType);
                     parent.AddChild(item, parent.Children.Count);
                     created++;
                 }

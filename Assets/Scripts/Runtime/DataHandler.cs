@@ -55,7 +55,7 @@ namespace Runtime
             foreach (var d in nodes)
             {
                 string pid = string.IsNullOrEmpty(d.ParentId) ? null : d.ParentId;
-                map[d.Id] = TreeNode.PopulateNewNode(d.Id, d.DisplayName, d.NodeType, pid, d.LayerType);
+                map[d.Id] = new TreeNode(d.Id, d.DisplayName, d.NodeType, pid, d.LayerType);
             }
 
             var roots = new List<TreeNode>();

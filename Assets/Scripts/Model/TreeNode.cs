@@ -6,8 +6,6 @@ namespace Model
 
     public class TreeNode
     {
-        private readonly List<TreeNode> _children;
-
         public string NodeId { get; }
         public string DisplayName { get; }
         public NodeType NodeType { get; }
@@ -18,32 +16,29 @@ namespace Model
 
         public bool IsVisible { get; private set; }
 
-        public IReadOnlyList<TreeNode> Children => _children;
+        public List<TreeNode> Children { get; }
 
-        private TreeNode(string nodeId, string displayName, NodeType type,
+        public bool IsGroup { get; }
+        
+        public TreeNode(string nodeId, string displayName, NodeType type,
                          string parentId, LayerType layerType)
         {
             NodeId = nodeId;
             DisplayName = displayName;
             NodeType = type;
+            IsGroup = type == NodeType.Group;
             LayerType = layerType;
             ParentId = parentId;
             IsExpanded = false;
             IsVisible = true;
-            _children = new List<TreeNode>();
+            Children = new List<TreeNode>();
         }
-
-        public static TreeNode PopulateNewNode(string nodeId, string displayName, NodeType type, string parentId,
-            LayerType layerType) =>
-            new(nodeId, displayName, type, parentId, layerType);
-
-        public bool IsGroup => NodeType == NodeType.Group;
         
         public void SetExpanded(bool value) => IsExpanded = value;
         public void SetVisible(bool value)  => IsVisible = value;
         public void SetParent(string parentId) => ParentId = parentId;
-        public void AddChild(TreeNode child, int index) => _children.Insert(index, child);
-        public void RemoveChild(TreeNode child) => _children.Remove(child);
+        public void AddChild(TreeNode child, int index) => Children.Insert(index, child);
+        public void RemoveChild(TreeNode child) => Children.Remove(child);
 
         public VisibilityState ComputeVisibilityState()
         {
@@ -54,8 +49,8 @@ namespace Model
             CollectLeafStates(this, ref anyVisible, ref anyHidden);
 
             if (anyVisible && anyHidden) return VisibilityState.Mixed;
-            if (anyHidden) return VisibilityState.Hidden;
-            return VisibilityState.Visible;
+            // If anyHidden is true, then all leaves are hidden, otherwise all leaves are visible
+            return anyHidden ? VisibilityState.Hidden : VisibilityState.Visible;
         }
 
         private static void CollectLeafStates(TreeNode node, ref bool anyVisible, ref bool anyHidden)
