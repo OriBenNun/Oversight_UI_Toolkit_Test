@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Logic;
+using Index;
 using Model;
 using UnityEngine;
 
-namespace Runtime
+namespace Logic
 {
     public class InteractionsHandler : MonoBehaviour
     {

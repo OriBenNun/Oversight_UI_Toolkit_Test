@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using Logic;
 using Model;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Runtime
+namespace UI
 {
     [RequireComponent(typeof(UIDocument))]
     public class RenderingHandler : MonoBehaviour

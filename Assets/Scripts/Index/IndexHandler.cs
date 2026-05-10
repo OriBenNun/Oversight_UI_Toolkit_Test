@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Index;
 using Model;
 using UnityEngine;
 
-namespace Runtime
+namespace Index
 {
     public class IndexHandler : MonoBehaviour
     {

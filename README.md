@@ -200,6 +200,10 @@ Starting to go over all the generated code from top to bottom again. Starting wi
 
 Model class (TreeNode) looks good. Simplified it a bit (changed to public ctr and other minor stuff)
 
+#### 1730:
+updated claude.md and splitted runtime classes between the folders (according to layers).
+
+Moving on to the index layer, now 2 classes: 
 
 Most Important Tradeoffs:
 1. Using Dict for fast lookup O(1), but being forced to use heap allocations for each node (breaks cache locality). Fine for 2500 nodes, but not for 250k nodes.

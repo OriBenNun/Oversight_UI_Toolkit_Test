@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Data;
-using Model;
 using UnityEngine;
 
-namespace Runtime
+namespace Model
 {
     public class DataHandler : MonoBehaviour
     {
